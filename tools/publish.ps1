@@ -37,7 +37,14 @@ param(
     [switch]$ReadyToRun,
 
     # NuGet 走本地代理（本机直连不稳时用）。
-    [string]$Proxy
+    [string]$Proxy,
+
+    # 代码签名（可选）：提供 PFX 文件或证书指纹（二者其一）；不提供则跳过。
+    # 例：-SignPfx cert.pfx -SignPfxPassword ***   或   -SignThumbprint <sha1>
+    [string]$SignPfx,
+    [string]$SignPfxPassword,
+    [string]$SignThumbprint,
+    [string]$TimestampUrl = 'http://timestamp.digicert.com'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -92,6 +99,36 @@ function Publish-Project {
     Get-ChildItem $Output -Recurse -Filter *.pdb -ErrorAction SilentlyContinue | Remove-Item -Force
 }
 
+function Invoke-Sign {
+    param([string]$File)
+
+    if (-not $SignPfx -and -not $SignThumbprint) { return }
+    if (-not (Test-Path $File)) { Write-Warning "签名目标不存在：$File"; return }
+
+    $signtool = (Get-Command signtool.exe -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+    if (-not $signtool) {
+        $kits = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+        $signtool = Get-ChildItem $kits -Directory -ErrorAction SilentlyContinue |
+            Sort-Object Name -Descending |
+            ForEach-Object { Join-Path $_.FullName 'x64\signtool.exe' } |
+            Where-Object { Test-Path $_ } |
+            Select-Object -First 1
+    }
+    if (-not $signtool) {
+        Write-Warning "未找到 signtool.exe（需 Windows SDK），跳过代码签名。"
+        return
+    }
+
+    $signArgs = @('sign', '/fd', 'SHA256', '/tr', $TimestampUrl, '/td', 'SHA256')
+    if ($SignThumbprint) { $signArgs += @('/sha1', $SignThumbprint) }
+    else { $signArgs += @('/f', $SignPfx) }
+    if ($SignPfxPassword) { $signArgs += @('/p', $SignPfxPassword) }
+    $signArgs += $File
+
+    & $signtool @signArgs
+    if ($LASTEXITCODE -ne 0) { Write-Warning "代码签名失败：$File" } else { Write-Host "已签名：$File" }
+}
+
 Publish-Project -Project $guiProj -Output $guiOut
 
 # 便携启动器（双击即用，无控制台窗口）。
@@ -120,6 +157,9 @@ if ($IncludeCli) {
     $cliOut = Join-Path $outRoot 'ZeOverlay-cli'
     Publish-Project -Project $cliProj -Output $cliOut
 }
+
+# 可选代码签名：在打包 zip 之前签，保证 zip 内也是签好的 exe。
+Invoke-Sign (Join-Path $guiOut 'ZeOverlay.Gui.exe')
 
 # 统计与可选打包。
 $guiFiles = Get-ChildItem $guiOut -Recurse -File

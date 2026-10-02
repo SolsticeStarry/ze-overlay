@@ -50,6 +50,16 @@ public sealed partial class Host
         _preview?.SetHotkeyHints(HotkeyHint(LabelSelectRoi), HotkeyHint(LabelSnapshot));
     }
 
+    /// <summary>设置变更后重新注册全部热键（先释放旧注册，避免手势残留）。</summary>
+    private void ReloadHotkeys()
+    {
+        _hotkeys?.Dispose();
+        _hotkeys = null;
+        _resolvedHotkeys.Clear();
+        RegisterHotkeys();
+        _log?.Info("热键已按新设置重新注册：" + DescribeHotkeys());
+    }
+
     /// <summary>取某个动作实际生效的热键；全部被占用时给出可读说明。</summary>
     private string HotkeyHint(string label)
         => _resolvedHotkeys.TryGetValue(label, out string? gesture) && !gesture.StartsWith('(')

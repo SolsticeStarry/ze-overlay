@@ -66,8 +66,6 @@ public sealed partial class Host : IDisposable
     /// </summary>
     private const double MinRowConfidence = 0.6;
 
-    /// <summary>识别间隔。PP-OCR 12 行约 0.8s，跑太密会拖垮采集循环；外推会补上间隔。</summary>
-    private static readonly TimeSpan OcrInterval = TimeSpan.FromMilliseconds(1000);
     private Log? _log;
     private Shots? _shots;
     private HotkeyManager? _hotkeys;

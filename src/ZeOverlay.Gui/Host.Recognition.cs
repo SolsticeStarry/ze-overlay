@@ -53,8 +53,8 @@ public sealed partial class Host
         var unparsed = new List<string>();
 
         // OCR 比采集贵得多（PP-OCR 12 行约 0.8s）。按 PLAN 第 10 节，采集 2Hz、识别低频，
-        // 中间靠本地倒计时外推补上；这样既不掉帧，也不必现在去抠 ONNX 性能（留 M6）。
-        if (DateTime.UtcNow - _lastOcrAt < OcrInterval)
+        // 中间靠本地倒计时外推补上；间隔可由配置调整（M5：刷新频率）。
+        if (DateTime.UtcNow - _lastOcrAt < CurrentOcrInterval())
         {
             BuildRecognitionText(DateTimeOffset.Now, engineLabel);
             return;
@@ -222,18 +222,32 @@ public sealed partial class Host
         var lines = new List<string>();
         var shown = new List<TrackerEntryView>();
 
-        var visibleEntries = entries
-            .Select(entry => (entry, match: _watchlist.Match(entry.ArtifactName)))
-            .Where(item => _watchlist.IsEmpty || item.match is not null)
-            .OrderBy(item => sortRanks.TryGetValue(item.match?.CanonicalName ?? item.entry.ArtifactName, out int rank) ? rank : int.MaxValue)
-            .ThenBy(item => (int)item.entry.Page)
-            .ThenBy(item => item.entry.Slot)
-            .ToList();
-
-        foreach (var item in visibleEntries)
+        // 先在必要时做名单过滤，并缓存每条的命中结果（供排序取名与展示取名复用）。
+        var matches = new Dictionary<string, WatchlistMatch?>(StringComparer.Ordinal);
+        var visible = new List<TrackerEntryView>(entries.Count);
+        foreach (TrackerEntryView entry in entries)
         {
-            TrackerEntryView entry = item.entry;
-            WatchlistMatch? match = item.match;
+            WatchlistMatch? match = _watchlist.Match(entry.ArtifactName);
+            if (!_watchlist.IsEmpty && match is null)
+            {
+                continue;
+            }
+
+            matches[EntryKey(entry)] = match;
+            visible.Add(entry);
+        }
+
+        List<TrackerEntryView> visibleEntries = OverlaySort.Apply(
+            visible,
+            OverlaySort.Parse(_config.Overlay.SortMode),
+            sortRanks,
+            entry => matches.TryGetValue(EntryKey(entry), out WatchlistMatch? m) && m is not null
+                ? m.CanonicalName
+                : entry.ArtifactName);
+
+        foreach (TrackerEntryView entry in visibleEntries)
+        {
+            WatchlistMatch? match = matches.TryGetValue(EntryKey(entry), out WatchlistMatch? hit) ? hit : null;
 
             shown.Add(entry);
 
@@ -424,5 +438,11 @@ public sealed partial class Host
             _log?.Error("[列表观测] 保存变化帧失败", ex);
         }
     }
+
+    private static string EntryKey(TrackerEntryView entry) => $"P{(int)entry.Page}#{entry.Slot}";
+
+    /// <summary>识别刷新间隔，来自配置并钳制到安全范围（M5：刷新频率）。</summary>
+    private TimeSpan CurrentOcrInterval()
+        => TimeSpan.FromMilliseconds(Math.Clamp(_config.Recognition.IntervalMs, 200, 5000));
 
 }

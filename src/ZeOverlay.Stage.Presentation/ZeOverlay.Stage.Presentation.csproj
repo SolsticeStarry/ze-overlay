@@ -13,5 +13,12 @@
     <ProjectReference Include="..\ZeOverlay.Infrastructure\ZeOverlay.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 复用主程序的图标，让预览/设置窗口标题栏与任务栏一致。 -->
+    <Resource Include="..\ZeOverlay.Gui\app.ico">
+      <Link>app.ico</Link>
+    </Resource>
+  </ItemGroup>
+
 </Project>
 

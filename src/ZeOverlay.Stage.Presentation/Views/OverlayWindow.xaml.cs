@@ -60,6 +60,10 @@ public partial class OverlayWindow : Window
     {
         FontSize = config.FontSize;
 
+        // 背景不透明度可配（0 = 完全透明，只剩文字）。
+        byte alpha = (byte)Math.Round(Math.Clamp(config.BackgroundOpacity, 0.0, 1.0) * 255);
+        Frame.Background = new SolidColorBrush(Color.FromArgb(alpha, 0x10, 0x10, 0x14));
+
         Rows.Children.Clear();
 
         if (entries.Count == 0)
@@ -114,13 +118,23 @@ public partial class OverlayWindow : Window
                 });
             }
 
-            if (entry.Source != EntrySource.Live)
+            if (config.ShowSourceMark && entry.Source != EntrySource.Live)
             {
                 block.Inlines.Add(new System.Windows.Documents.Run("  ~")
                 {
                     Foreground = extrapolated,
                     FontSize = config.FontSize * 0.85,
                 });
+            }
+
+            if (config.ShowPageSlot)
+            {
+                var prefix = new System.Windows.Documents.Run($"#{(int)entry.Page}-{entry.Slot:00}  ")
+                {
+                    Foreground = new SolidColorBrush(Color.FromRgb(113, 113, 122)),
+                    FontSize = config.FontSize * 0.85,
+                };
+                block.Inlines.InsertBefore(block.Inlines.FirstInline, prefix);
             }
 
             Rows.Children.Add(block);
