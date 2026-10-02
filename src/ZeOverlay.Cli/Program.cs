@@ -26,7 +26,7 @@ internal static class Program
           --capture-once [--frames N] [--delay MS]        采集自检（退出码 0/2/3）
           --analyze-image <png> [--roi x,y,w,h] [--glyphs]  行剖分 / 字形切分
           --ocr <png> [--roi ...]                         系统 OCR 原始行
-          --recognize <png> [--roi ...] [--ppocr]         完整识别链路
+          --recognize <png> [--roi ...] [--ppocr] [--parser bracket|plain]  完整识别链路
           --bench-ocr <png> [--roi ...] [--model <onnx>] [--threads N] [--repeat N]
                             [--no-spin] [--ep cpu|dml] [--fixed-width N] [--batch N]
                             [--dml-device N] [--out <txt>]  识别耗时拆解
@@ -81,9 +81,10 @@ internal static class Program
         {
             string path = recognizeIndex + 1 < args.Length ? args[recognizeIndex + 1] : string.Empty;
             bool usePpOcr = args.Any(a => a.Equals("--ppocr", StringComparison.OrdinalIgnoreCase));
+            ParserMode parserMode = ProfileDefaults.ParseMode(GetStringArg(args, "--parser"));
             Paths cliPaths = Paths.ForExecutable();
             WatchlistConfig list = WatchlistStore.Load(cliPaths.WatchlistFile);
-            return RecognizeDump.Run(path, roiText, list.Names, list.MatchThreshold, usePpOcr);
+            return RecognizeDump.Run(path, roiText, list.Names, list.MatchThreshold, usePpOcr, parserMode);
         }
 
         int analyzeIndex = Array.FindIndex(args, a => a.Equals("--analyze-image", StringComparison.OrdinalIgnoreCase));

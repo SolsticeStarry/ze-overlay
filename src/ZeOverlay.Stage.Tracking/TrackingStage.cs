@@ -30,7 +30,8 @@ public sealed class TrackingStage : ITrackingStage
                 row.CooldownSeconds,
                 row.UsesRemaining,
                 row.UsesTotal,
-                row.PlayerName));
+                row.PlayerName,
+                row.ServerIndex));
         }
 
         TrackerFrameResult result = _tracker.Observe(input.RowCount, observed, input.Now);

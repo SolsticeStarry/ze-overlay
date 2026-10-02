@@ -36,6 +36,12 @@ public sealed class PpOcrEngine : IDisposable
     private readonly string _outputName;
     private readonly string[] _characters;
 
+    /// <summary>
+    /// 串行化推理。DirectML 下从两个线程同时 `Run` 同一个会话会触发原生
+    /// `AccessViolationException`（实测：框选时 UI 线程的选档识别与采集线程的识别撞车直接崩进程）。
+    /// </summary>
+    private readonly object _runGate = new();
+
     public PpOcrEngine(
         string modelPath,
         string keysPath,
@@ -177,29 +183,37 @@ public sealed class PpOcrEngine : IDisposable
 
         fillWatch.Stop();
 
+        // DirectML 下并发 Run 同一会话会原生崩溃，必须串行。
         var runWatch = Stopwatch.StartNew();
-        using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> outputs =
-            _session.Run([NamedOnnxValue.CreateFromTensor(_inputName, tensor)]);
-        runWatch.Stop();
-
-        Tensor<float> output = outputs.First().AsTensor<float>();
-        var denseOutput = (DenseTensor<float>)output;
-        var results = new List<(string, double)>(batch);
-
-        var decodeWatch = Stopwatch.StartNew();
-        for (int i = 0; i < batch; i++)
+        IDisposableReadOnlyCollection<DisposableNamedOnnxValue> outputs;
+        lock (_runGate)
         {
-            results.Add(Decode(denseOutput, i));
+            outputs = _session.Run([NamedOnnxValue.CreateFromTensor(_inputName, tensor)]);
         }
 
-        decodeWatch.Stop();
+        runWatch.Stop();
 
-        return new BatchTiming(
-            results,
-            fillWatch.Elapsed.TotalMilliseconds,
-            runWatch.Elapsed.TotalMilliseconds,
-            decodeWatch.Elapsed.TotalMilliseconds,
-            width);
+        using (outputs)
+        {
+            Tensor<float> output = outputs.First().AsTensor<float>();
+            var denseOutput = (DenseTensor<float>)output;
+            var results = new List<(string, double)>(batch);
+
+            var decodeWatch = Stopwatch.StartNew();
+            for (int i = 0; i < batch; i++)
+            {
+                results.Add(Decode(denseOutput, i));
+            }
+
+            decodeWatch.Stop();
+
+            return new BatchTiming(
+                results,
+                fillWatch.Elapsed.TotalMilliseconds,
+                runWatch.Elapsed.TotalMilliseconds,
+                decodeWatch.Elapsed.TotalMilliseconds,
+                width);
+        }
     }
 
     public (string Text, double Confidence) RecognizeCrop(ImageFrame crop)

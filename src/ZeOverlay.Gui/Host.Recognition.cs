@@ -158,12 +158,19 @@ public sealed partial class Host
 
         string detail = string.Join(
             " | ",
-            all.Select(e => string.Create(
-                CultureInfo.InvariantCulture,
-                $"P{(int)e.Page}#{e.Slot}={e.ArtifactName}"
-                + $"{(e.State == ArtifactState.Cooling ? $"[{e.CooldownSeconds}]" : "[R]")}"
-                + $"{(e.UsesRemaining is { } r && e.UsesTotal is { } t ? $"{r}/{t}" : string.Empty)}"
-                + $" {(e.Source == EntrySource.Live ? "实" : "推")}m{e.MissedSessions}")));
+            all.Select(e =>
+            {
+                string key = e.ServerIndex is { } si
+                    ? $"{e.ArtifactName}{si.ToString(CultureInfo.InvariantCulture)}"
+                    : $"P{(int)e.Page}#{e.Slot}={e.ArtifactName}";
+
+                return string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"{key}"
+                    + $"{(e.State == ArtifactState.Cooling ? $"[{e.CooldownSeconds}]" : "[R]")}"
+                    + $"{(e.UsesRemaining is { } r && e.UsesTotal is { } t ? $"{r}/{t}" : string.Empty)}"
+                    + $" {(e.Source == EntrySource.Live ? "实" : "推")}m{e.MissedSessions}");
+            }));
 
         _log?.Info($"[跟踪表] 共 {all.Count} 条（命中名单 {matched} 条）: {detail}");
     }
@@ -186,7 +193,9 @@ public sealed partial class Host
     /// <summary>把一行识别文本解析成观测；失败时记入 unparsed 备查。玩家名不参与身份，直接丢弃。</summary>
     private void ParseInto(string text, int slot, List<ObservedRow> observed, List<string> unparsed)
     {
-        ParsedRow? parsed = Parser.Parse(text);
+        ParsedRow? parsed = Parser.ParseAuto(
+            text,
+            _config.Vocabulary.Concat(_watchlistConfig.Names).Distinct(StringComparer.Ordinal).ToList());
         if (parsed is null)
         {
             unparsed.Add(text);
@@ -209,13 +218,20 @@ public sealed partial class Host
             parsed.CooldownSeconds,
             parsed.UsesRemaining,
             parsed.UsesTotal,
-            parsed.PlayerName));
+            parsed.PlayerName,
+            parsed.ServerIndex));
     }
 
     /// <summary>按关注名单过滤；名单为空时全部显示（否则界面上什么都看不到，没法用）。</summary>
     private void BuildRecognitionText(DateTimeOffset now, string engineLabel)
     {
         IReadOnlyList<TrackerEntryView> entries = _tracker.Snapshot(now);
+
+        // 只要还有带标号的条目，就认为当前是连写服（用于自动提速）。
+        if (entries.Count > 0)
+        {
+            _communityMode = entries.Any(e => e.ServerIndex is not null);
+        }
         Dictionary<string, int> sortRanks = _watchlistConfig.SortOrder
             .Select((name, index) => (name, index))
             .ToDictionary(item => item.name, item => item.index, StringComparer.Ordinal);
@@ -253,6 +269,11 @@ public sealed partial class Host
             shown.Add(entry);
 
             string name = match?.CanonicalName ?? entry.ArtifactName;
+            if (entry.ServerIndex is { } serverIndex)
+            {
+                name += serverIndex.ToString(CultureInfo.InvariantCulture);
+            }
+
             string status = entry.State switch
             {
                 ArtifactState.Ready => "[R]",
@@ -346,12 +367,12 @@ public sealed partial class Host
 
         // 超过单页上限 ⇒ 量测不可信（ROI 混进了非列表内容）。
         // 这种观测绝不能喂给结构跟踪器，否则会把「基准行数」污染成错误量级。
-        if (report.RowCount > ListRules.MaxRowsPerPage)
+        if (report.RowCount > MaxObservableRows)
         {
             if (DateTime.UtcNow - _lastOverflowWarnAt >= FollowWarnMinInterval)
             {
                 _lastOverflowWarnAt = DateTime.UtcNow;
-                _log?.Warn($"[列表观测] 稳健行数 {report.RowCount} 超过单页上限 {ListRules.MaxRowsPerPage}，本次观测已丢弃。");
+                _log?.Warn($"[列表观测] 稳健行数 {report.RowCount} 超过上限 {MaxObservableRows}，本次观测已丢弃（ROI 可能混入了非列表内容）。");
             }
 
             _previousFrame = frame;
@@ -389,7 +410,8 @@ public sealed partial class Host
             _ => $"行数与内容同时变化（{change.PreviousRowCount} → {change.CurrentRowCount}）",
         };
 
-        if (change.LooksLikePageChange)
+        // 连写服（带标号）实测不翻页：不报「疑似翻页」，避免噪声误导。
+        if (change.LooksLikePageChange && !_communityMode)
         {
             kind += $"（疑似翻页：显著少于基准行数 {_structureTracker.BaselineRowCount}）";
         }
@@ -440,10 +462,15 @@ public sealed partial class Host
         }
     }
 
-    private static string EntryKey(TrackerEntryView entry) => $"P{(int)entry.Page}#{entry.Slot}";
+    private static string EntryKey(TrackerEntryView entry) => TrackerKeys.Identity(entry);
 
-    /// <summary>识别刷新间隔，来自配置并钳制到安全范围（M5：刷新频率）。</summary>
+    /// <summary>一帧里稳健行数超过这个数，基本是 ROI 混进了非列表内容，该观测丢弃。</summary>
+    private const int MaxObservableRows = 24;
+
+    /// <summary>识别刷新间隔。连写服自动提到 200ms（列表变化快）；否则用配置并钳制到安全范围。</summary>
     private TimeSpan CurrentOcrInterval()
-        => TimeSpan.FromMilliseconds(Math.Clamp(_config.Recognition.IntervalMs, 200, 5000));
+        => _communityMode
+            ? TimeSpan.FromMilliseconds(200)
+            : TimeSpan.FromMilliseconds(Math.Clamp(_config.Recognition.IntervalMs, 200, 5000));
 
 }

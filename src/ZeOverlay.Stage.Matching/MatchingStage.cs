@@ -42,7 +42,8 @@ public sealed class MatchingStage : IMatchingStage
                 entry.CooldownSeconds,
                 entry.UsesRemaining,
                 entry.UsesTotal,
-                entry.Source));
+                entry.Source,
+                entry.ServerIndex));
         }
 
         return result

@@ -39,8 +39,10 @@ public static class OverlaySort
     };
 
     /// <summary>
-    /// 稳定性约定：除 <see cref="OverlaySortMode.Watchlist"/> 外的模式都以「页 → 行槽位」收尾，
-    /// 保证同键条目顺序确定、不随帧抖动。
+    /// 稳定性约定：各模式都以「页 → 标号 → 行槽位」收尾（槽位只作最后兜底）。
+    /// **标号优先于槽位**很关键：连写服回流会让条目保留"上次所在行位"，同名多神器
+    /// （爆闪1/爆闪2）会因行位互换而上下颠倒；按标号排就稳定。
+    /// <see cref="OverlaySortMode.Slot"/> 例外，保持"原始行序"。
     /// </summary>
     /// <param name="nameOf">条目用于排序/查名次的显示名（命中名单时为标准名，否则为识别名）。</param>
     public static List<TrackerEntryView> Apply(
@@ -62,6 +64,7 @@ public static class OverlaySort
             OverlaySortMode.Name => entries
                 .OrderBy(e => nameOf(e), StringComparer.Ordinal)
                 .ThenBy(e => (int)e.Page)
+                .ThenBy(e => e.ServerIndex ?? int.MaxValue)
                 .ThenBy(e => e.Slot)
                 .ToList(),
 
@@ -69,12 +72,14 @@ public static class OverlaySort
                 .OrderBy(e => e.State == ArtifactState.Cooling ? 1 : 0)
                 .ThenBy(e => e.State == ArtifactState.Cooling ? e.CooldownSeconds ?? int.MaxValue : 0)
                 .ThenBy(e => (int)e.Page)
+                .ThenBy(e => e.ServerIndex ?? int.MaxValue)
                 .ThenBy(e => e.Slot)
                 .ToList(),
 
             _ => entries
                 .OrderBy(e => watchlistRanks.TryGetValue(nameOf(e), out int rank) ? rank : int.MaxValue)
                 .ThenBy(e => (int)e.Page)
+                .ThenBy(e => e.ServerIndex ?? int.MaxValue)
                 .ThenBy(e => e.Slot)
                 .ToList(),
         };

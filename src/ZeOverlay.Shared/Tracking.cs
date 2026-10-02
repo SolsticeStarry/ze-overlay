@@ -32,7 +32,7 @@ public enum VisiblePage
     Page2,
 }
 
-/// <summary>一行的识别结果。身份只用行号；玩家名仅作展示（不参与身份）。</summary>
+/// <summary>一行的识别结果。默认身份只用行号；玩家名仅作展示（不参与身份）。</summary>
 public sealed record ObservedRow(
     int Slot,
     string ArtifactName,
@@ -40,7 +40,8 @@ public sealed record ObservedRow(
     int? CooldownSeconds = null,
     int? UsesRemaining = null,
     int? UsesTotal = null,
-    string PlayerName = "");
+    string PlayerName = "",
+    int? ServerIndex = null);
 
 /// <summary>对外展示的条目（倒计时已按墙钟外推）。</summary>
 public sealed record TrackerEntryView(
@@ -55,7 +56,8 @@ public sealed record TrackerEntryView(
     DateTimeOffset FirstSeen,
     DateTimeOffset LastSeen,
     int MissedSessions,
-    string PlayerName = "")
+    string PlayerName = "",
+    int? ServerIndex = null)
 {
     public string Display => $"{ArtifactName} (第{(int)Page}页 #{Slot})";
 }
@@ -67,6 +69,24 @@ public sealed record TrackerFrameResult(
     IReadOnlyList<string> Refreshed,
     IReadOnlyList<string> Missed,
     IReadOnlyList<string> Removed);
+
+/// <summary>
+/// 跟踪条目的**稳定键**（名单匹配缓存 / 排序用）。
+/// 标号身份（连写服）用「名称+标号」；行槽位身份用「页+槽位」。
+/// 关键：标号身份下条目会保留"上次所在行位"，不同条目可能撞同一行位，
+/// 所以**不能**用 页#槽位 当键，否则名单匹配会张冠李戴。
+/// </summary>
+public static class TrackerKeys
+{
+    public static string Identity(TrackerEntryView entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        return entry.ServerIndex is { } index
+            ? $"{entry.ArtifactName}\u0000{index}"
+            : $"P{(int)entry.Page}#{entry.Slot}";
+    }
+}
 
 public sealed class TrackerOptions
 {
@@ -84,6 +104,22 @@ public sealed class TrackerOptions
 
     /// <summary>行数不低于基准行数的这个比例时，认为当前显示的是第 1 页。</summary>
     public double PageOneRowRatio { get; set; } = 0.6;
+
+    /// <summary>
+    /// 该服务器档案是否有翻页。为 false（社区服实测无翻页）时，不再区分第 1/2 页，
+    /// 所有可见行都当作同一页，避免行数波动被误判成翻页。
+    /// </summary>
+    public bool PagingEnabled { get; set; } = true;
+
+    /// <summary>该档案的单页最大行数（用于钳制基准行数）。</summary>
+    public int MaxRowsPerPage { get; set; } = ListRules.MaxRowsPerPage;
+
+    /// <summary>
+    /// 身份改用「神器名 + 服务器标号」（<see cref="ObservedRow.ServerIndex"/>）而不是行槽位。
+    /// 社区服列表在神器被用掉后会回流（下方整体上移），槽位不再稳定，必须用标号身份。
+    /// 本服括号语法没有标号，保持 false（行槽位身份）。
+    /// </summary>
+    public bool KeyByServerLabel { get; set; }
 
     /// <summary>兜底：距最后一次读到超过这么久就移除（含不可见页/列表消失的情况）。</summary>
     public int MaxAgeSeconds { get; set; } = 300;

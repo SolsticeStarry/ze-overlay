@@ -134,7 +134,7 @@ public sealed partial class Host
                 warnings.Add(report.RegionWarning);
             }
 
-            warnings.AddRange(ListRules.ValidateRoi(report.RowCount, report.Grid?.Pitch, roi.Height));
+            warnings.AddRange(ListRules.ValidateRoi(report.RowCount, report.Grid?.Pitch, roi.Height, MaxObservableRows));
 
             return warnings.Count == 0 ? null : string.Join("　", warnings);
         }

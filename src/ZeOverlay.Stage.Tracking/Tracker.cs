@@ -21,9 +21,11 @@ public sealed class Tracker
     {
         public required VisiblePage Page { get; init; }
 
-        public required int Slot { get; init; }
+        public required int Slot { get; set; }
 
         public required string Key { get; init; }
+
+        public int? ServerIndex { get; set; }
 
         public string ArtifactName { get; set; } = string.Empty;
 
@@ -88,7 +90,8 @@ public sealed class Tracker
                 entry.FirstSeen,
                 entry.LastSeen,
                 entry.MissedSessions,
-                entry.PlayerName));
+                entry.PlayerName,
+                entry.ServerIndex));
         }
 
         return views;
@@ -98,7 +101,14 @@ public sealed class Tracker
     {
         ArgumentNullException.ThrowIfNull(rows);
 
-        VisiblePage page = ClassifyPage(rowCount);
+        // 社区服每行带服务器标号 ⇒ 用「名称+标号」身份且不分页；本服无标号 ⇒ 行槽位身份。
+        // **粘性**：只要还有标号身份条目存在，就保持标号模式，避免"某一帧标号全丢"时
+        // 翻成行槽位身份、造出槽位键条目污染（真正换到无标号服时，旧标号条目超时会自然退出）。
+        bool anyLabel = rows.Any(r => r.ServerIndex is not null);
+        bool hasLabelEntries = _entries.Values.Any(e => e.ServerIndex is not null);
+        bool byLabel = _options.KeyByServerLabel || anyLabel || hasLabelEntries;
+
+        VisiblePage page = ClassifyPage(rowCount, byLabel);
 
         var added = new List<string>();
         var refreshed = new List<string>();
@@ -106,7 +116,18 @@ public sealed class Tracker
 
         foreach (ObservedRow row in rows)
         {
-            string key = KeyOf(page, row.Slot);
+            // 标号身份：**直接采信画面读数**。标号整段读丢（null）时**不猜**——
+            // 按「同名最近槽位」借标号会在同类多神器下污染真实兄弟（跨帧也会），
+            // 故宁可跳过这一行（缺一帧数据，最多 6s 后由画面重读）。EXG 无标号走行槽位身份。
+            int? labelIndex = row.ServerIndex;
+            if (byLabel && labelIndex is null)
+            {
+                continue;
+            }
+
+            string key = byLabel
+                ? $"{(int)page}:{row.ArtifactName}:{labelIndex}"
+                : $"{(int)page}:{row.Slot}";
 
             if (!_entries.TryGetValue(key, out Entry? entry))
             {
@@ -115,6 +136,7 @@ public sealed class Tracker
                     Page = page,
                     Slot = row.Slot,
                     Key = key,
+                    ServerIndex = labelIndex,
                     FirstSeen = now,
                     LastSeen = now,
                 };
@@ -131,12 +153,43 @@ public sealed class Tracker
             // 但 `n/m` 例外——实测 OCR 会间歇性漏读（`[R]4/5` 有时只读到 `[R]`），
             // 整行覆盖会让 uses 来回闪烁。所以**同一槽位同一神器时，没读到就保留旧值**；
             // 一旦该槽位换了神器（sameArtifact=false）仍然整行覆盖。
-            bool sameArtifact = string.Equals(entry.ArtifactName, row.ArtifactName, StringComparison.Ordinal);
+            bool sameArtifact = string.Equals(entry.ArtifactName, row.ArtifactName, StringComparison.Ordinal)
+                && entry.ServerIndex == row.ServerIndex;
+
+            int? previousCooldown = ExtrapolatedCooldown(entry, now);
+            bool wasCooling = entry.State == ArtifactState.Cooling;
 
             entry.ArtifactName = row.ArtifactName;
             entry.PlayerName = row.PlayerName ?? string.Empty;
+            entry.ServerIndex = labelIndex;
+            entry.Slot = row.Slot;
             entry.State = row.State;
-            entry.CooldownAtObservation = row.State == ArtifactState.Cooling ? row.CooldownSeconds : null;
+
+            if (row.State == ArtifactState.Cooling)
+            {
+                int newCooldown = Math.Max(0, row.CooldownSeconds ?? 0);
+
+                // 冷却只会往下走。同一神器上读数突然远大于外推值，多半是 OCR 把小数读丢
+                // （`3.5s` → `35s`）或读花；直接采纳会让倒计时乱跳 ⇒ 忽略这次尖峰，沿用外推。
+                //
+                // 例外：外推值已接近 0（冷却基本走完）时的**再次使用**会给出一个新的长冷却，
+                // 这是合法重置，必须接受，否则会一直卡在"就绪"（1Hz 采样可能看不到中间的 R 帧）。
+                // 例外1：上一帧没连续观测到（中间有间断）⇒ 可能是"新一件复用了同一身份"或"再次使用"，
+                //        无法用"只降不升"判断，直接采信读数。
+                // 例外2：外推值已接近 0（冷却基本走完）时的再次使用也会给出新的长冷却，是合法重置。
+                bool plausible = entry.Source != EntrySource.Live
+                    || !wasCooling
+                    || !sameArtifact
+                    || previousCooldown is not { } previous
+                    || previous <= 1
+                    || newCooldown <= previous + 1;
+
+                entry.CooldownAtObservation = plausible ? newCooldown : previousCooldown;
+            }
+            else
+            {
+                entry.CooldownAtObservation = null;
+            }
 
             if (!sameArtifact || row.UsesRemaining is not null || row.UsesTotal is not null)
             {
@@ -197,8 +250,6 @@ public sealed class Tracker
         return new TrackerFrameResult(page, rowCount, added, refreshed, missed, removed);
     }
 
-    private static string KeyOf(VisiblePage page, int slot) => $"{(int)page}:{slot}";
-
     private int? ExtrapolatedCooldown(Entry entry, DateTimeOffset now)
     {
         if (entry.CooldownAtObservation is not { } observed)
@@ -210,14 +261,20 @@ public sealed class Tracker
         return Math.Max(0, (int)Math.Ceiling(observed - elapsed));
     }
 
-    private VisiblePage ClassifyPage(int rowCount)
+    private VisiblePage ClassifyPage(int rowCount, bool byLabel)
     {
         if (rowCount <= 0)
         {
             return VisiblePage.Unknown;
         }
 
-        _baselineRows = Math.Max(_baselineRows, Math.Min(rowCount, ListRules.MaxRowsPerPage));
+        // 社区服（带标号）实测不翻页：所有可见行都算同一页，不产生第 2 页身份。
+        if (byLabel || !_options.PagingEnabled)
+        {
+            return VisiblePage.Page1;
+        }
+
+        _baselineRows = Math.Max(_baselineRows, Math.Min(rowCount, _options.MaxRowsPerPage));
 
         if (_baselineRows <= 0)
         {

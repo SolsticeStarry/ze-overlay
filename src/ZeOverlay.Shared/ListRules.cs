@@ -21,22 +21,28 @@ public static class ListRules
     /// 对一次 ROI 量测结果做领域校验，返回人类可读的告警；无问题时返回空列表。
     /// </summary>
     public static IReadOnlyList<string> ValidateRoi(int rowCount, double? pitch, int roiHeight)
+        => ValidateRoi(rowCount, pitch, roiHeight, MaxRowsPerPage);
+
+    /// <summary>
+    /// 同上，但用指定档案的单页上限校验（不同社区服一屏行数不同）。
+    /// </summary>
+    public static IReadOnlyList<string> ValidateRoi(int rowCount, double? pitch, int roiHeight, int maxRowsPerPage)
     {
         var warnings = new List<string>();
 
-        if (rowCount > MaxRowsPerPage)
+        if (rowCount > maxRowsPerPage)
         {
             warnings.Add(
-                $"检出 {rowCount} 行，超过单页上限 {MaxRowsPerPage} 行 —— ROI 很可能把列表以外的内容也框了进来。");
+                $"检出 {rowCount} 行，超过单页上限 {maxRowsPerPage} 行 —— ROI 很可能把列表以外的内容也框了进来。");
         }
 
         if (pitch is > 0)
         {
-            double needed = MaxRowsPerPage * pitch.Value + RoiHeightPadding;
+            double needed = maxRowsPerPage * pitch.Value + RoiHeightPadding;
             if (roiHeight > needed * RoiHeightSlack)
             {
                 warnings.Add(
-                    $"ROI 高度 {roiHeight}px 明显大于单页上限所需（≈{needed:0}px = {MaxRowsPerPage} 行 × 行距 {pitch:0.#}），"
+                    $"ROI 高度 {roiHeight}px 明显大于单页上限所需（≈{needed:0}px = {maxRowsPerPage} 行 × 行距 {pitch:0.#}），"
                     + "可以把下边界往上收，减少无关内容。");
             }
         }

@@ -61,6 +61,12 @@ public partial class PreviewWindow : Window
         SettingsPanelControl.Applied += (_, _) => SettingsApplied?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// 档案切换后刷新左侧设置面板（只重新载入，不重复订阅 Applied，避免一次应用触发多次）。
+    /// </summary>
+    public void ReloadSettings(AppConfig config, WatchlistConfig watchlist, Func<IReadOnlyList<string>> recentNames)
+        => SettingsPanelControl.LoadFrom(config, watchlist, recentNames);
+
     /// <summary>刷新设置面板里的「最近识别」列表。</summary>
     public void RefreshRecentNames(Func<IReadOnlyList<string>> recentNames)
         => SettingsPanelControl.RefreshRecentNames(recentNames);

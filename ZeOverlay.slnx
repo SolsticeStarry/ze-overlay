@@ -17,4 +17,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/ZeOverlay.Tests/ZeOverlay.Tests.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/ScenarioViz/ScenarioViz.csproj" />
+  </Folder>
 </Solution>

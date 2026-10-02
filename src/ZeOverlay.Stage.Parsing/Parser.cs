@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using ZeOverlay.Shared;
 
@@ -33,7 +34,26 @@ public static class Parser
     /// <summary>闭括号的形近字。</summary>
     private const string ClosingBrackets = "]］】〗》）」)｝}〕";
 
-    public static ParsedRow? Parse(string? rawText)
+    public static ParsedRow? Parse(
+        string? rawText,
+        ParserMode mode = ParserMode.Bracket,
+        IReadOnlyList<string>? vocabulary = null)
+        => mode == ParserMode.Plain ? ParsePlain(rawText, vocabulary) : ParseBracket(rawText);
+
+    /// <summary>
+    /// 自动判断行格式：先按本服「状态括号」解析，找不到有效括号再按社区服 Plain 语法。
+    /// 两个服的行格式差别是结构性的（有无状态括号），逐行判断即可，**无需人工选档案/语法**。
+    /// </summary>
+    public static ParsedRow? ParseAuto(string? rawText, IReadOnlyList<string>? vocabulary = null)
+    {
+        // 关键：这里**不带**裸状态兜底——否则社区服连写行（`人闪1…`）会被本服解析器
+        // 把标号数字误当冷却，必须让它落到 Plain 分支。
+        ParsedRow? bracket = ParseBracket(rawText, allowBareFallback: false);
+        return bracket ?? ParsePlain(rawText, vocabulary);
+    }
+
+    /// <summary>本服语法：括号锚定。见类注释。</summary>
+    private static ParsedRow? ParseBracket(string? rawText, bool allowBareFallback = true)
     {
         if (string.IsNullOrWhiteSpace(rawText))
         {
@@ -106,7 +126,8 @@ public static class Parser
         //
         // 只在**完全没有括号**时才启用：解析器一旦发现过括号，就不该再用裸标记去猜，
         // 否则容易从名称/玩家名里抠出个数字当状态。
-        if (!sawOpeningBracket
+        if (allowBareFallback
+            && !sawOpeningBracket
             && TryParseBareStatus(normalized, out int tokenStart, out ArtifactState bareState, out int? bareCooldown, out int tokenEnd))
         {
             string bareName = stripped[..tokenStart].Trim();
@@ -136,6 +157,265 @@ public static class Parser
         }
 
         return null;
+    }
+
+    // ---------------- Plain 模式（社区服，无方括号） ----------------
+
+    /// <summary>
+    /// 社区服语法：`神器简称+序号 玩家名 状态`，整行连写无分隔符
+    /// （见 <c>docs/REAL_SAMPLES.md</c> 样本 #5 / #6）。
+    ///
+    /// 判定方式（两个真机样本已验证）：
+    /// - **状态从右取**：`就绪` / `NNs`（含 `1.5s`，只保留整数部分）/ `n/m` / `∞`；
+    /// - **简称从左侧取**：开头的非数字段 = 神器简称，紧随的数字段 = 序号（丢弃）；
+    /// - 中间剩下的就是玩家名。
+    ///
+    /// 现实：PP-OCR 会把 `∞` 读成孤立的 `0`（样本 #5）或 `8`（样本 #6），
+    /// 因此把末尾「未被数字或斜杠包围的 1~2 位孤立数字」也当作无限（就绪）处理。
+    /// </summary>
+    private static ParsedRow? ParsePlain(string? rawText, IReadOnlyList<string>? vocabulary)
+    {
+        if (string.IsNullOrWhiteSpace(rawText))
+        {
+            return null;
+        }
+
+        string stripped = StripWhitespace(rawText);
+        if (stripped.Length == 0)
+        {
+            return null;
+        }
+
+        string text = NormalizeFullWidth(stripped);
+
+        TryParsePlainStatus(text, out ArtifactState state, out int? cooldown, out int? usesRemaining, out int? usesTotal, out int statusStart);
+
+        // 社区服**每一行都带状态**（就绪 / NNs / n/m / ∞）。没有状态的通常是把列表标题
+        // （如「地图神器·人类」）或场景噪声当成了行——这类必须丢弃，否则标题会变成幽灵条目。
+        if (state == ArtifactState.Unknown)
+        {
+            return null;
+        }
+
+        string head = statusStart > 0 && statusStart <= text.Length ? text[..statusStart] : text;
+
+        // 从左侧取「简称 + 序号」：第一个数字段之前是简称，数字段是序号（丢弃）。
+        int digitStart = -1;
+        for (int i = 0; i < head.Length; i++)
+        {
+            if (char.IsAsciiDigit(head[i]))
+            {
+                digitStart = i;
+                break;
+            }
+        }
+
+        string name;
+        string player;
+        int? serverIndex = null;
+
+        if (digitStart > 0 && digitStart < head.Length)
+        {
+            int digitEnd = digitStart;
+            while (digitEnd < head.Length && char.IsAsciiDigit(head[digitEnd]))
+            {
+                digitEnd++;
+            }
+
+            if (int.TryParse(head.AsSpan(digitStart, digitEnd - digitStart), NumberStyles.None, CultureInfo.InvariantCulture, out int index))
+            {
+                serverIndex = index;
+            }
+
+            // 标号离谱（OCR 读花，如 `定位310`、`黑闪16`）⇒ 名称/标号都不可信，丢弃。
+            // 上限 9：超出基本是把状态数字并进来了，留着它会造出重复条目。
+            if (serverIndex is null or < 1 or > 9)
+            {
+                return null;
+            }
+
+            name = head[..digitStart];
+            player = head[digitEnd..];
+        }
+        else if (!TrySplitByVocabulary(head, vocabulary, out name, out player))
+        {
+            // 没有标号、又切不出已知名称（OCR 把玩家名并了进来）⇒ 名称不可信，丢弃。
+            // 若给了名表，则用最长前缀切出名称、其余当玩家名（视频/低清下标号常被读丢）。
+            return null;
+        }
+
+        name = TrimPlainNoise(name);
+        player = TrimPlainNoise(player);
+
+        // 名称必须命中档案名表，否则视为 OCR 读花（`优火盐`/`正位`…）。用它会为同一标号建出重复条目。
+        if (name.Length == 0 || (vocabulary is { Count: > 0 } && !MatchesVocabulary(name, vocabulary)))
+        {
+            return null;
+        }
+
+        return new ParsedRow(name, player, state, cooldown, usesRemaining, usesTotal, rawText, ServerIndex: serverIndex);
+    }
+
+    private static bool MatchesVocabulary(string name, IReadOnlyList<string> vocabulary)
+    {
+        foreach (string entry in vocabulary)
+        {
+            if (Similar.Ratio(name, entry) >= 0.74)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 标号缺失时，用档案名表里**最长的前缀**切出神器名称，其余作为玩家名。
+    /// 例：`手电王梦虎`（`手电1` 的 `1` 被读丢）→ 名称 `手电`、玩家 `王梦虎`。
+    /// </summary>
+    private static bool TrySplitByVocabulary(
+        string head,
+        IReadOnlyList<string>? vocabulary,
+        out string name,
+        out string player)
+    {
+        name = string.Empty;
+        player = string.Empty;
+
+        if (vocabulary is null || vocabulary.Count == 0)
+        {
+            return false;
+        }
+
+        string? best = null;
+
+        foreach (string entry in vocabulary)
+        {
+            if (entry.Length > 0
+                && head.StartsWith(entry, StringComparison.Ordinal)
+                && (best is null || entry.Length > best.Length))
+            {
+                best = entry;
+            }
+        }
+
+        if (best is null)
+        {
+            return false;
+        }
+
+        name = best;
+        player = head[best.Length..];
+        return true;
+    }
+
+    /// <summary>从右侧解析 Plain 模式的状态；未识别到时 <paramref name="tokenStart"/> = 文本长度。</summary>
+    private static void TryParsePlainStatus(
+        string text,
+        out ArtifactState state,
+        out int? cooldown,
+        out int? usesRemaining,
+        out int? usesTotal,
+        out int tokenStart)
+    {
+        state = ArtifactState.Unknown;
+        cooldown = null;
+        usesRemaining = null;
+        usesTotal = null;
+        tokenStart = text.Length;
+
+        if (text.Length == 0)
+        {
+            return;
+        }
+
+        // 1) 就绪
+        if (text.EndsWith("就绪", StringComparison.Ordinal))
+        {
+            state = ArtifactState.Ready;
+            tokenStart = text.Length - 2;
+            return;
+        }
+
+        // 2) n/m（剩余/总数）
+        Match slash = PlainUsesRegex.Match(text);
+        if (slash.Success && slash.Index + slash.Length == text.Length)
+        {
+            usesRemaining = int.Parse(slash.Groups["r"].ValueSpan, NumberStyles.None, CultureInfo.InvariantCulture);
+            usesTotal = int.Parse(slash.Groups["t"].ValueSpan, NumberStyles.None, CultureInfo.InvariantCulture);
+            state = ArtifactState.Ready;
+            tokenStart = slash.Index;
+            return;
+        }
+
+        // 3) 冷却 Ns / N.Ns（丢弃小数，只取整数部分）
+        Match cooling = PlainCooldownRegex.Match(text);
+        if (cooling.Success && cooling.Index + cooling.Length == text.Length)
+        {
+            cooldown = int.Parse(cooling.Groups["s"].ValueSpan, NumberStyles.None, CultureInfo.InvariantCulture);
+            state = ArtifactState.Cooling;
+            tokenStart = cooling.Index;
+            return;
+        }
+
+        // 4) 无限符号
+        if (text[^1] == '∞')
+        {
+            state = ArtifactState.Ready;
+            tokenStart = text.Length - 1;
+            return;
+        }
+
+        // 5) 兜底：∞ 被 OCR 读成孤立数字（0 / 8 / 00…），前后无数字或斜杠。
+        Match misread = PlainInfinityMisreadRegex.Match(text);
+        if (misread.Success && misread.Index + misread.Length == text.Length)
+        {
+            state = ArtifactState.Ready;
+            tokenStart = misread.Index;
+        }
+    }
+
+    private static readonly Regex PlainUsesRegex = new(
+        @"(?<r>\d{1,3})/(?<t>\d{1,3})$",
+        RegexOptions.Compiled);
+
+    /// <summary>冷却：整数可带小数部分，末尾 `s`；小数部分整体丢弃。</summary>
+    private static readonly Regex PlainCooldownRegex = new(
+        @"(?<s>\d{1,3})(?:\.\d+)?[sS]$",
+        RegexOptions.Compiled);
+
+    /// <summary>
+    /// `∞` 被 PP-OCR 读成孤立数字时的兜底。**只认实测的单个 `0`/`8`**（见 `REAL_SAMPLES.md` 样本 #5/#6）。
+    ///
+    /// 早期实现是「任意 1~2 位结尾数字」，但那会把**冷却丢单位**的行误判成就绪——
+    /// 连写服冷却显示 `49s`，OCR 偶尔把结尾 `s` 读丢变成 `49`，于是长倒计时会瞬间跳 `[R]`
+    /// （实机反馈）。收紧后 `49` 不再被当成 `∞`，该行解析失败被丢弃、由本地外推继续走冷却。
+    /// </summary>
+    private static readonly Regex PlainInfinityMisreadRegex = new(
+        @"(?<![\d/])[08]$",
+        RegexOptions.Compiled);
+
+    /// <summary>
+    /// 清掉简称/玩家名首尾多出来的符号噪声：OCR 常见的 `|`、`~`、截断省略号，
+    /// 以及社区服行首有时会带的 `#`（颜色标记残片）、`@`。
+    /// </summary>
+    private static string TrimPlainNoise(string text)
+    {
+        const string noise = "|｜丨~～.·、#@*^";
+
+        string trimmed = text.Trim();
+
+        while (trimmed.Length > 0 && noise.Contains(trimmed[0]))
+        {
+            trimmed = trimmed[1..];
+        }
+
+        while (trimmed.Length > 0 && noise.Contains(trimmed[^1]))
+        {
+            trimmed = trimmed[..^1];
+        }
+
+        return trimmed.Trim();
     }
 
     /// <summary>

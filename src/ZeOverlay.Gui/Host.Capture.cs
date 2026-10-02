@@ -60,7 +60,17 @@ public sealed partial class Host
                 _lastError = string.Empty;
                 _frameCount++;
                 fpsFrames++;
-                AnalyzeAndRecognize(frame);
+
+                // 采集线程上的任何异常都不能杀进程：隔离并记日志，下一帧继续。
+                try
+                {
+                    AnalyzeAndRecognize(frame);
+                }
+                catch (Exception ex)
+                {
+                    _lastError = ex.Message;
+                    _log?.Error("[采集] 分析与识别异常（已隔离，进程继续）", ex);
+                }
             }
             else
             {
@@ -77,7 +87,9 @@ public sealed partial class Host
 
             PublishFrame();
 
-            int periodMs = Math.Max(50, 1000 / Math.Max(1, _config.Capture.Fps));
+            int configuredPeriodMs = Math.Max(50, 1000 / Math.Max(1, _config.Capture.Fps));
+            // 连写服自动提速到 5Hz（200ms），括号服沿用配置频率。
+            int periodMs = _communityMode ? Math.Min(configuredPeriodMs, 200) : configuredPeriodMs;
             int sleep = periodMs - (int)watch.ElapsedMilliseconds;
             if (sleep > 0)
             {
@@ -129,6 +141,9 @@ public sealed partial class Host
           .Append(' ').Append(monitor.Bounds.Width).Append('x').Append(monitor.Bounds.Height)
           .Append(" @").Append((monitor.Scale * 100).ToString("0", CultureInfo.InvariantCulture)).Append("% (")
           .Append(monitor.Dpi).Append(" dpi)");
+        sb.AppendLine();
+
+        sb.Append("行语法: 自动判断（括号 / 连写）    名表: ").Append(_config.Vocabulary.Count).Append(" 项");
         sb.AppendLine();
 
         sb.Append("跟随目标: ").Append(_followSummary);

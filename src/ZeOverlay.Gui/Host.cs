@@ -42,8 +42,8 @@ public sealed partial class Host : IDisposable
     private Pipeline? _pipeline;
     private TrackingStage? _trackingStage;
     private string _recognitionName = string.Empty;
-    private readonly TrackerOptions _trackerOptions = new();
-    private readonly Tracker _tracker;
+    private TrackerOptions _trackerOptions = new();
+    private Tracker _tracker = new();
     private readonly Dictionary<string, int> _recentNameCounts = new(StringComparer.Ordinal);
     private readonly object _recentNamesGate = new();
 
@@ -56,6 +56,12 @@ public sealed partial class Host : IDisposable
     private DateTime _lastOcrAt = DateTime.MinValue;
     private DateTime _lastEntryDumpAt = DateTime.MinValue;
     private DateTime _lastOverlayGuardAt = DateTime.MinValue;
+
+    /// <summary>
+    /// 当前是否识别到「连写服」（行带服务器标号）。用于**自动提速**：
+    /// 连写服列表变化快，采集提到 5Hz、识别 200ms；括号服沿用配置值。
+    /// </summary>
+    private volatile bool _communityMode;
 
     /// <summary>跟踪表诊断的间隔。</summary>
     private static readonly TimeSpan EntryDumpInterval = TimeSpan.FromSeconds(15);
@@ -85,7 +91,7 @@ public sealed partial class Host : IDisposable
     private double _measuredFps;
     private int _rowCount = -1;
     private double? _rowPitch;
-    private readonly Structure _structureTracker = new();
+    private Structure _structureTracker = new();
     private ImageFrame? _previousFrame;
     private readonly Cache _rowAnalysisCache = new();
     private int _changeSaveCount;
@@ -135,12 +141,19 @@ public sealed partial class Host : IDisposable
         _shots = new Shots(_paths.ShotsDirectory, _config.Storage.MaxShots);
 
         WatchlistConfig watchlist = WatchlistStore.Load(_paths.WatchlistFile);
-        _watchlistConfig = watchlist;
-        _watchlist = new Matcher(
-            watchlist.Names,
-            new WatchlistOptions { Threshold = watchlist.MatchThreshold });
 
-        _log?.Info($"识别引擎={_ocr.Name}（可用={_ocr.IsAvailable}）；关注名单={_watchlist.Entries.Count} 项；阈值={watchlist.MatchThreshold:0.##}");
+        // 把旧的「多档案」结构折叠成单配置：采用当前档案的 ROI/名单，并合并所有档案的名表。
+        // 之后行语法逐行自动判断，不再需要人工选档案。
+        ProfileDefaults.CollapseProfiles(_config, watchlist);
+        ConfigStore.Save(_paths.ConfigFile, _config);
+        WatchlistStore.Save(_paths.WatchlistFile, watchlist);
+        ApplyRuntimeConfig(watchlist);
+
+        _log?.Info(
+            $"识别引擎={_ocr.Name}（可用={_ocr.IsAvailable}）；"
+            + $"关注名单={_watchlist.Entries.Count} 项；阈值={_watchlistConfig.MatchThreshold:0.##}；"
+            + $"名表={_config.Vocabulary.Count} 项；"
+            + $"ROI={(string.IsNullOrWhiteSpace(_config.Roi.ScreenRect) ? "未标定" : _config.Roi.ScreenRect)}");
 
         // 优先用 PP-OCR（按行识别）；模型缺失或加载失败时回退系统 OCR。
         string modelPath = Path.Combine(_paths.BaseDirectory, "models", "ch_PP-OCRv3_rec_infer.onnx");
@@ -302,11 +315,35 @@ public sealed partial class Host : IDisposable
         _trackingStage = new TrackingStage(_tracker);
         _pipeline = new Pipeline(
             new RowAnalysisStage(),
-            new GlyphSegmentationStage(),
+            // 全宽裁剪：社区服的简称列又小又暗，紧缩到字形会把整列裁掉；全宽对本服也实测 12/12。
+            new GlyphSegmentationStage(useBandWidth: true),
             new PpOcrRecognitionStage(_ppOcr, _ppOcrFixedWidth, _ppOcrBatchSize),
-            new ParsingStage(),
+            // 逐行自动判断行格式（括号 / 连写）；名表用于社区服切分与挡 OCR 读花。
+            new ParsingStage(vocabulary: _config.Vocabulary),
             _trackingStage,
             new MatchingStage(_watchlist, _watchlistConfig.SortOrder));
+    }
+
+    /// <summary>
+    /// 把单份配置装进运行时：名单、跟踪器、ROI。行语法逐行自动判断，不再需要档案切换。
+    /// </summary>
+    private void ApplyRuntimeConfig(WatchlistConfig watchlist)
+    {
+        _watchlistConfig = watchlist;
+        _watchlist = new Matcher(
+            watchlist.Names,
+            new WatchlistOptions { Threshold = watchlist.MatchThreshold });
+
+        _trackerOptions = new TrackerOptions
+        {
+            DisappearAfterSeconds = Math.Clamp(_config.Tracking.RowDisappearSeconds, 0.5, 60),
+        };
+        _tracker = new Tracker(_trackerOptions);
+
+        lock (_stateGate)
+        {
+            _roi = PixelRect.Parse(_config.Roi.ScreenRect);
+        }
     }
 
     private void ApplyStorageConfig()
@@ -330,12 +367,13 @@ public sealed partial class Host : IDisposable
 
     private void RestoreCalibration()
     {
-        if (!_config.Roi.IsSet)
+        RoiConfig profileRoi = _config.Roi;
+        if (!profileRoi.IsSet)
         {
             return;
         }
 
-        PixelRect roi = PixelRect.Parse(_config.Roi.ScreenRect);
+        PixelRect roi = PixelRect.Parse(profileRoi.ScreenRect);
         if (roi.IsEmpty)
         {
             return;
@@ -356,7 +394,7 @@ public sealed partial class Host : IDisposable
         }
 
         _notice = $"已从 config.json 恢复 ROI：{roi}";
-        _log?.Info($"恢复 ROI={roi}；窗口相对={_config.Roi.WindowRelative}；目标={_config.Roi.TargetWindowProcess}");
+        _log?.Info($"恢复 ROI={roi}；窗口相对={profileRoi.WindowRelative}；目标={profileRoi.TargetWindowProcess}");
     }
 
     /// <summary>启动时对已保存的 ROI 也做一次校验：配置可能被手改，或显示器/窗口已变化。</summary>

@@ -21,7 +21,8 @@ public sealed record DisplayEntry(
     int? CooldownSeconds,
     int? UsesRemaining,
     int? UsesTotal,
-    EntrySource Source)
+    EntrySource Source,
+    int? ServerIndex = null)
 {
     public string Key => $"P{(int)Page}#{Slot}";
 }

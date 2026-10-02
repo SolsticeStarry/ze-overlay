@@ -31,7 +31,13 @@ internal static class RecognizeDump
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    public static int Run(string imagePath, string? roiText, IReadOnlyList<string> watchlist, double threshold, bool usePpOcr = false)
+    public static int Run(
+        string imagePath,
+        string? roiText,
+        IReadOnlyList<string> watchlist,
+        double threshold,
+        bool usePpOcr = false,
+        ParserMode parserMode = ParserMode.Bracket)
     {
         if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
         {
@@ -89,13 +95,14 @@ internal static class RecognizeDump
             engineName = pp.Name;
 
             RowReport report = Analyzer.Analyze(target);
-            IReadOnlyList<RowCrop> crops = new GlyphSegmentationStage().Process(new RowInput(target, report));
+            IReadOnlyList<RowCrop> crops = new GlyphSegmentationStage(useBandWidth: true)
+                .Process(new RowInput(target, report));
             sourceLineCount = crops.Count;
 
             foreach (PpOcrRow row in pp.RecognizeCrops(crops))
             {
                 rawTexts.Add($"{row.Text}   [置信 {row.Confidence:0.00}]");
-                ParsedRow? rowParsed = Parser.Parse(row.Text);
+                ParsedRow? rowParsed = Parser.Parse(row.Text, parserMode);
                 if (rowParsed is not null)
                 {
                     parsed.Add(rowParsed);
@@ -116,7 +123,7 @@ internal static class RecognizeDump
 
             foreach (OcrTextLine line in lines.OrderBy(l => l.Y))
             {
-                ParsedRow? row = Parser.Parse(line.Text);
+                ParsedRow? row = Parser.Parse(line.Text, parserMode);
                 if (row is not null)
                 {
                     parsed.Add(row);
@@ -131,7 +138,7 @@ internal static class RecognizeDump
         var sb = new StringBuilder();
         sb.AppendLine(string.Create(
             CultureInfo.InvariantCulture,
-            $"引擎: {engineName}    输入行={sourceLineCount}    解析成功={parsed.Count}    名单={matcher.Entries.Count} 项"));
+            $"引擎: {engineName}    输入行={sourceLineCount}    解析成功={parsed.Count}    语法={parserMode}    名单={matcher.Entries.Count} 项"));
         sb.AppendLine();
         sb.AppendLine("  # | 名称           | 状态        | n/m  | 玩家名");
         sb.AppendLine("----+----------------+-------------+------+------------------------");

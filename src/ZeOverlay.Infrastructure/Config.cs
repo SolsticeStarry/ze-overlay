@@ -22,6 +22,67 @@ public sealed class AppConfig
     public RecognitionConfig Recognition { get; set; } = new();
 
     public TrackingConfig Tracking { get; set; } = new();
+
+    /// <summary>
+    /// 服务器档案表（一份程序多档案）。每个档案自带解析语法 / ROI / 名单 / 分页参数，
+    /// 运行时按神器名自动选档，也可手动切换。空表 ⇒ 首次启动时由旧配置迁移出一个档案。
+    /// </summary>
+    public List<ServerProfileConfig> Profiles { get; set; } = [];
+
+    /// <summary>当前生效的档案 Id；为空时取第一个档案。（旧结构，已不参与运行，仅作迁移来源）</summary>
+    public string ActiveProfileId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 神器名表（**格式自动判断**用）：社区服 Plain 语法用它切分「简称 / 玩家名」，
+    /// 并挡掉 OCR 读花的名称。可把多个服的名字并在一起。
+    /// </summary>
+    public List<string> Vocabulary { get; set; } = [];
+}
+
+/// <summary>
+/// 一个社区服档案。把原先散落在全局的社区相关假设（解析语法、ROI、名单、单页行数、是否翻页）
+/// 收拢到一起，便于同时适配多个服。
+/// </summary>
+public sealed class ServerProfileConfig
+{
+    public string Id { get; set; } = "default";
+
+    public string DisplayName { get; set; } = "本服";
+
+    /// <summary>解析语法："bracket"（本服，默认）| "plain"（社区服，无方括号）。</summary>
+    public string ParserMode { get; set; } = "bracket";
+
+    /// <summary>该服是否有翻页（列表超过单页换第 2 页）。社区服实测无翻页。</summary>
+    public bool PagingEnabled { get; set; } = true;
+
+    /// <summary>单页最大行数；超过即视为量测不可信（ROI 混进了非列表内容）。</summary>
+    public int MaxRowsPerPage { get; set; } = ListRules.MaxRowsPerPage;
+
+    /// <summary>该档案的采集频率（Hz）；0 = 用全局 <see cref="CaptureConfig.Fps"/>。</summary>
+    public int CaptureFps { get; set; }
+
+    /// <summary>该档案的识别间隔（毫秒）；0 = 用全局 <see cref="RecognitionConfig.IntervalMs"/>。</summary>
+    public int RecognitionIntervalMs { get; set; }
+
+    /// <summary>该档案的行消失超时（秒）；0 = 用全局 <see cref="TrackingConfig.RowDisappearSeconds"/>。</summary>
+    public double RowDisappearSeconds { get; set; }
+
+    /// <summary>该服列表区域（HUD 位置不同，各存一份）。</summary>
+    public RoiConfig Roi { get; set; } = new();
+
+    /// <summary>该服的关注名单；为空 = 全部显示。</summary>
+    public List<string> Watchlist { get; set; } = [];
+
+    /// <summary>显示分组顺序。</summary>
+    public List<string> SortOrder { get; set; } = [];
+
+    public double MatchThreshold { get; set; } = 0.85;
+
+    /// <summary>
+    /// 自动选档用的神器名称表（该服全部神器名）。为空时回退用 <see cref="Watchlist"/>。
+    /// 它应尽量完整，不随用户的关注名单变化。
+    /// </summary>
+    public List<string> Vocabulary { get; set; } = [];
 }
 
 /// <summary>跟踪/消亡参数（M5）。</summary>
@@ -173,6 +234,9 @@ public sealed class HotkeyConfig
 
     /// <summary>进入/退出拖动模式（穿透窗口不能直接拖）。</summary>
     public string DragOverlay { get; set; } = "Ctrl+Alt+D";
+
+    /// <summary>切换到下一个服务器档案（用于给新服框选 ROI / 手动纠正自动选档）。</summary>
+    public string CycleProfile { get; set; } = "Ctrl+Alt+P";
 }
 
 public sealed class StorageConfig

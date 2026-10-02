@@ -135,9 +135,18 @@ public partial class OverlayWindow : Window
 
             block.Inlines.Add(new System.Windows.Documents.Run(entry.ArtifactName));
 
-            // 标号：紧贴名称后、与名称同色；**按神器类型**分别编号（同类 1,2,3…）。
-            if (config.ShowRowNumber && !RowLabels.HasNumberLabel(entry.ArtifactName))
+            // 标号：紧贴名称后、与名称同色。
+            if (entry.ServerIndex is { } serverIndex)
             {
+                // 社区服 HUD 自带稳定标号（如 `手电3` 的 3）⇒ 直接用，不再叠加自动编号。
+                block.Inlines.Add(new System.Windows.Documents.Run(serverIndex.ToString(CultureInfo.InvariantCulture))
+                {
+                    Foreground = body,
+                });
+            }
+            else if (config.ShowRowNumber && !RowLabels.HasNumberLabel(entry.ArtifactName))
+            {
+                // 按**神器类型**分别编号（同类 1,2,3…）。
                 int n = typeCounters.TryGetValue(entry.ArtifactName, out int c) ? c + 1 : 1;
                 typeCounters[entry.ArtifactName] = n;
                 block.Inlines.Add(new System.Windows.Documents.Run(n.ToString(CultureInfo.InvariantCulture))
