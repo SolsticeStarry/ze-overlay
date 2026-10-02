@@ -23,6 +23,11 @@ public partial class PreviewWindow : Window
     public PreviewWindow()
     {
         InitializeComponent();
+
+        // 默认停靠屏幕右侧工作区，给左侧的设置窗口留位。
+        Rect workArea = SystemParameters.WorkArea;
+        Left = Math.Max(workArea.Left, workArea.Right - Width - 16);
+        Top = workArea.Top + 16;
     }
 
     public bool IsPaused { get; private set; }

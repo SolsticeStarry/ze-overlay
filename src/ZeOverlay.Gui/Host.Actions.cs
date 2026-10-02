@@ -77,8 +77,19 @@ public sealed partial class Host
             return;
         }
 
-        var window = new SettingsWindow(_config, _watchlistConfig, SnapshotRecentNames);
-        window.Owner = _preview;
+        var window = new SettingsWindow(_config, _watchlistConfig, SnapshotRecentNames)
+        {
+            Owner = _preview,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+        };
+
+        // 设置窗口展开在预览窗口左侧，两者并排可见。
+        Rect workArea = SystemParameters.WorkArea;
+        double previewLeft = _preview?.Left ?? workArea.Right;
+        double previewTop = _preview?.Top ?? workArea.Top + 16;
+        window.Left = Math.Max(workArea.Left + 8, previewLeft - window.Width - 12);
+        window.Top = Math.Max(workArea.Top + 8, previewTop);
+
         if (window.ShowDialog() != true)
         {
             return;

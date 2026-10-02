@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="ZeOverlay · M0 列表区域预览"
         Icon="pack://application:,,,/ZeOverlay.Stage.Presentation;component/app.ico"
-        Height="820"
-        Width="980"
+        Height="740"
+        Width="880"
         Background="#FF1B1B1F"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="Manual">
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
