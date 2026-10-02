@@ -2,6 +2,7 @@
 using System.Windows.Threading;
 using ZeOverlay.Core.Config;
 using ZeOverlay.Core.Diagnostics;
+using ZeOverlay.Platform.Windows;
 
 namespace ZeOverlay.App;
 
@@ -39,6 +40,26 @@ public partial class App : Application
         {
             string ocrPath = ocrIndex + 1 < e.Args.Length ? e.Args[ocrIndex + 1] : string.Empty;
             Shutdown(OcrDump.Run(ocrPath, roiText));
+            return;
+        }
+
+        // M6 性能量测：ZeOverlay.exe --bench-ocr <png> [--roi ...] [--model <onnx>] [--threads N] [--repeat N] [--out <txt>]
+        int benchIndex = Array.FindIndex(e.Args, a => a.Equals("--bench-ocr", StringComparison.OrdinalIgnoreCase));
+        if (benchIndex >= 0)
+        {
+            string path = benchIndex + 1 < e.Args.Length ? e.Args[benchIndex + 1] : string.Empty;
+            string? model = GetStringArg(e.Args, "--model");
+            int? threads = GetIntArg(e.Args, "--threads");
+            int repeat = ParseIntArg(e.Args, "--repeat", 3);
+            string? outFile = GetStringArg(e.Args, "--out");
+            bool? allowSpinning = e.Args.Any(a => a.Equals("--no-spin", StringComparison.OrdinalIgnoreCase)) ? false : null;
+            OcrExecutionProvider provider = GetStringArg(e.Args, "--ep")?.ToLowerInvariant() is "dml" or "directml"
+                ? OcrExecutionProvider.DirectML
+                : OcrExecutionProvider.Cpu;
+            int dmlDevice = GetIntArg(e.Args, "--dml-device") ?? 0;
+            int fixedWidth = GetIntArg(e.Args, "--fixed-width") ?? 0;
+            int batch = GetIntArg(e.Args, "--batch") ?? 1;
+            Shutdown(BenchOcr.Run(path, roiText, model, threads, repeat, outFile, allowSpinning, provider, dmlDevice, fixedWidth, batch));
             return;
         }
 
@@ -96,6 +117,18 @@ public partial class App : Application
         }
 
         return fallback;
+    }
+
+    private static string? GetStringArg(string[] args, string name)
+    {
+        int index = Array.FindIndex(args, a => a.Equals(name, StringComparison.OrdinalIgnoreCase));
+        return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
+    }
+
+    private static int? GetIntArg(string[] args, string name)
+    {
+        int index = Array.FindIndex(args, a => a.Equals(name, StringComparison.OrdinalIgnoreCase));
+        return index >= 0 && index + 1 < args.Length && int.TryParse(args[index + 1], out int value) ? value : null;
     }
 
     protected override void OnExit(ExitEventArgs e)

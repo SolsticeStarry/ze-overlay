@@ -16,6 +16,39 @@ public sealed class AppConfig
     public OverlayConfig Overlay { get; set; } = new();
 
     public StorageConfig Storage { get; set; } = new();
+
+    public RecognitionConfig Recognition { get; set; } = new();
+}
+
+/// <summary>PP-OCR 识别运行时参数（M6）。</summary>
+public sealed class RecognitionConfig
+{
+    /// <summary>onnxruntime intra-op 线程数；0 = 交给运行时自动决定。</summary>
+    public int IntraOpThreads { get; set; }
+
+    /// <summary>
+    /// 工作线程在两次推理之间是否自旋等待。默认关闭：
+    /// 识别只有 1Hz，自旋会让常驻 CPU 白涨（见 docs/DESIGN.md §4 M6）。
+    /// </summary>
+    public bool AllowSpinning { get; set; }
+
+    /// <summary>
+    /// 执行提供程序："directml"（默认，DX12 GPU 通用加速）或 "cpu"。
+    /// DML 初始化失败（无 DX12/驱动不兼容）会自动回退 CPU。
+    /// </summary>
+    public string ExecutionProvider { get; set; } = "directml";
+
+    /// <summary>
+    /// 固定输入宽度（0=关闭）。DML 对输入形状敏感：每换一次宽度就重编译算子，实测慢 3 倍。
+    /// DML 下建议设 640~768（保持长宽比、右侧补灰，不改字形）。
+    /// </summary>
+    public int FixedInputWidth { get; set; }
+
+    /// <summary>
+    /// 每次送模型的批大小。0=自动（DML 用 12，CPU 用 1）。
+    /// 实测 DML 全批 12 行 ~70ms，比逐行快 1.6×；CPU 上批处理反而更慢。
+    /// </summary>
+    public int BatchSize { get; set; }
 }
 
 /// <summary>穿透叠加窗口（PLAN 第 8.1 节）。</summary>

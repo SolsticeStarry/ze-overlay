@@ -22,4 +22,19 @@
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      DirectML 运行库：ORT 1.24 的 DML EP 需要配套版本（不是 System32 里的 in-box 旧版，
+      否则运行时报 0x80070057）。Microsoft.AI.DirectML 是传递依赖，其 build targets 不会被导入，
+      所以这里显式引用并把 win-x64 的 DirectML.dll 复制到 exe 旁。
+    -->
+    <PackageReference Include="Microsoft.AI.DirectML" Version="1.15.4" GeneratePathProperty="true" ExcludeAssets="all" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(PkgMicrosoft_AI_DirectML)\bin\x64-win\DirectML.dll"
+          Link="DirectML.dll"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
