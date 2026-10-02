@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>ZeOverlay.Stage.Presentation</RootNamespace>
+    <AssemblyName>ZeOverlay.Stage.Presentation</AssemblyName>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+        <ProjectReference Include="..\ZeOverlay.Shared\ZeOverlay.Shared.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Win32\ZeOverlay.Win32.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Infrastructure\ZeOverlay.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
+

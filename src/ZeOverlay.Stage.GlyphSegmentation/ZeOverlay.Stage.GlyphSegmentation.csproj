@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>ZeOverlay.Stage.GlyphSegmentation</RootNamespace>
+    <AssemblyName>ZeOverlay.Stage.GlyphSegmentation</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZeOverlay.Shared\ZeOverlay.Shared.csproj" />
+  </ItemGroup>
+
+</Project>
+
