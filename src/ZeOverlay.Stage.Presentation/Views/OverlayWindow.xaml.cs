@@ -102,12 +102,13 @@ public partial class OverlayWindow : Window
                 Margin = new Thickness(0, 1, 0, 1),
             };
 
-            // 最左：未扫描到（本地外推）的标记 △，比原来的尾缀 ~ 更醒目。
-            if (config.ShowSourceMark && entry.Source != EntrySource.Live)
+            // 最左：为未扫描到标记 △ 预留固定宽度。
+            // 关键：实时行也用**同字形**（只是透明），这样无论有没有 △，正文起点都一致，不会左右跳动。
+            if (config.ShowSourceMark)
             {
                 block.Inlines.Add(new System.Windows.Documents.Run("△ ")
                 {
-                    Foreground = marker,
+                    Foreground = entry.Source == EntrySource.Live ? Brushes.Transparent : marker,
                     FontWeight = FontWeights.Bold,
                 });
             }
