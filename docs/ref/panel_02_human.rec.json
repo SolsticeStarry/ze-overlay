@@ -1,0 +1,147 @@
+{
+  "engine": "PP-OCRv3-rec(6624 类)",
+  "inputLineCount": 12,
+  "parsedCount": 12,
+  "rawTexts": [
+    "滋水枪[R]范德彪の奇妙冒险   [置信 0.93]",
+    "滋水枪[R]用户6116041   [置信 0.89]",
+    "紫色瓶中闪电[R]☆Komorebi★   [置信 0.89]",
+    "袋装火盐[R]析构万理的发条公主   [置信 0.95]",
+    "荧光棒[R]4/5皇家口粮   [置信 0.93]",
+    "荧光棒[R]5/5【猫娘】繁花凡   [置信 0.93]",
+    "紫色瓶中闪电[R]心绘灵   [置信 0.94]",
+    "手电筒[R]烧烤鱼   [置信 0.87]",
+    "袋装火盐[R]用户6744311   [置信 0.87]",
+    "手电筒[R]宝宝害怕   [置信 0.87]",
+    "滋水枪[R]真就一颗a   [置信 0.95]",
+    "桶装杏仁水[R]心形坠盒   [置信 0.93]"
+  ],
+  "watchlist": [
+    "滋水枪",
+    "荧光棒",
+    "紫色瓶中闪电",
+    "皇家口粮"
+  ],
+  "rows": [
+    {
+      "artifact": "滋水枪",
+      "player": "范德彪の奇妙冒险",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": "滋水枪",
+      "raw": "滋水枪[R]范德彪の奇妙冒险"
+    },
+    {
+      "artifact": "滋水枪",
+      "player": "用户6116041",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": "滋水枪",
+      "raw": "滋水枪[R]用户6116041"
+    },
+    {
+      "artifact": "紫色瓶中闪电",
+      "player": "☆Komorebi★",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": "紫色瓶中闪电",
+      "raw": "紫色瓶中闪电[R]☆Komorebi★"
+    },
+    {
+      "artifact": "袋装火盐",
+      "player": "析构万理的发条公主",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "袋装火盐[R]析构万理的发条公主"
+    },
+    {
+      "artifact": "荧光棒",
+      "player": "皇家口粮",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": 4,
+      "usesTotal": 5,
+      "matchedName": "荧光棒",
+      "raw": "荧光棒[R]4/5皇家口粮"
+    },
+    {
+      "artifact": "荧光棒",
+      "player": "【猫娘】繁花凡",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": 5,
+      "usesTotal": 5,
+      "matchedName": "荧光棒",
+      "raw": "荧光棒[R]5/5【猫娘】繁花凡"
+    },
+    {
+      "artifact": "紫色瓶中闪电",
+      "player": "心绘灵",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": "紫色瓶中闪电",
+      "raw": "紫色瓶中闪电[R]心绘灵"
+    },
+    {
+      "artifact": "手电筒",
+      "player": "烧烤鱼",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "手电筒[R]烧烤鱼"
+    },
+    {
+      "artifact": "袋装火盐",
+      "player": "用户6744311",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "袋装火盐[R]用户6744311"
+    },
+    {
+      "artifact": "手电筒",
+      "player": "宝宝害怕",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "手电筒[R]宝宝害怕"
+    },
+    {
+      "artifact": "滋水枪",
+      "player": "真就一颗a",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": "滋水枪",
+      "raw": "滋水枪[R]真就一颗a"
+    },
+    {
+      "artifact": "桶装杏仁水",
+      "player": "心形坠盒",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "桶装杏仁水[R]心形坠盒"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# 构建产物
+bin/
+obj/
+artifacts/
+publish/
+
+# 运行时数据（固定在 exe 旁）
+logs/
+shots/
+
+# 本地配置
+config.json
+watchlist.json
+
+# 量测产物（由 --analyze-image 生成，属派生数据）
+*.rows.png
+*.rows.json
+*.rows.txt
+
+# 编辑器
+.vs/
+.vscode/
+.idea/
+*.user
+
+# 旧 Python 尝试（已废弃，若再次出现则忽略）
+.venv/
+__pycache__/
+*.pyc

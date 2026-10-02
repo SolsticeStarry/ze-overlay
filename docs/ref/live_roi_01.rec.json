@@ -1,0 +1,26 @@
+{
+  "engine": "PP-OCRv3-rec(6624 类)",
+  "inputLineCount": 1,
+  "parsedCount": 1,
+  "rawTexts": [
+    "黑色瓶中闪电[R]1/1黑色瓶中闪电   [置信 0.94]"
+  ],
+  "watchlist": [
+    "滋水枪",
+    "荧光棒",
+    "紫色瓶中闪电",
+    "皇家口粮"
+  ],
+  "rows": [
+    {
+      "artifact": "黑色瓶中闪电",
+      "player": "黑色瓶中闪电",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": 1,
+      "usesTotal": 1,
+      "matchedName": null,
+      "raw": "黑色瓶中闪电[R]1/1黑色瓶中闪电"
+    }
+  ]
+}
