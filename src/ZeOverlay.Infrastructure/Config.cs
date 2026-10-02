@@ -99,8 +99,16 @@ public sealed class OverlayConfig
     /// <summary>是否在条目前显示 `#页-行`。</summary>
     public bool ShowPageSlot { get; set; }
 
-    /// <summary>是否为外推（本地推算）条目显示 `~` 标记。</summary>
+    /// <summary>是否为未扫描到（本地推算）的条目显示最左 `▲` 标记。</summary>
     public bool ShowSourceMark { get; set; } = true;
+
+    /// <summary>
+    /// 无数字标号时，是否自动按行从 1 编号（将来社区自带标号时不会叠加）。
+    /// </summary>
+    public bool ShowRowNumber { get; set; } = true;
+
+    /// <summary>行间距（像素）：每行上下追加的间距，可为负以收紧。默认 2。</summary>
+    public double RowSpacing { get; set; } = 2.0;
 
     /// <summary>叠加背景不透明度 0.00–1.00（0 = 完全透明）。</summary>
     public double BackgroundOpacity { get; set; } = 0.09;

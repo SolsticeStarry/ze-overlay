@@ -78,12 +78,15 @@ public partial class OverlayWindow : Window
             return;
         }
 
-        // 颜色统一：正文不再按“实时 / 外推”换色；外推只用最左侧的 △ 标记区分。
+        // 颜色统一：正文不再按“实时 / 外推”换色；外推只用最左侧的 ▲ 标记区分。
         Brush body = Parse(config.LiveColor);
         Brush marker = Parse(config.ExtrapolatedColor);
+        double halfSpacing = config.RowSpacing / 2.0;
 
-        foreach (TrackerEntryView entry in entries)
+        for (int i = 0; i < entries.Count; i++)
         {
+            TrackerEntryView entry = entries[i];
+
             string status = entry.State switch
             {
                 ArtifactState.Ready => "[R]",
@@ -99,7 +102,10 @@ public partial class OverlayWindow : Window
             {
                 FontSize = config.FontSize,
                 Foreground = body,
-                Margin = new Thickness(0, 1, 0, 1),
+                Margin = new Thickness(0, halfSpacing, 0, halfSpacing),
+                // 固定行高：避免放大的 ▲ 把每行撑高；行间距统一由 RowSpacing 控制。
+                LineHeight = config.FontSize * 1.5,
+                LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
             };
 
             // 最左：为未扫描到标记 ▲ 预留固定宽度。
@@ -111,6 +117,16 @@ public partial class OverlayWindow : Window
                     Foreground = entry.Source == EntrySource.Live ? Brushes.Transparent : marker,
                     FontWeight = FontWeights.Bold,
                     FontSize = config.FontSize * 1.5,
+                });
+            }
+
+            // 行号：名称未带数字标号时，按显示顺序从 1 编号；右对齐占 2 位，避免宽度跳动。
+            if (config.ShowRowNumber && !RowLabels.HasNumberLabel(entry.ArtifactName))
+            {
+                block.Inlines.Add(new System.Windows.Documents.Run($"{i + 1,2}. ")
+                {
+                    Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                    FontSize = config.FontSize * 0.9,
                 });
             }
 

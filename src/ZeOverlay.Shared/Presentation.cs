@@ -80,3 +80,38 @@ public static class OverlaySort
         };
     }
 }
+
+/// <summary>
+/// 行号相关纯逻辑：判断名称是否**已带数字标号**（如 `1 滋水枪`、`【2】滋水枪`）。
+/// 当前社区的名称为空标号 ⇒ 展示时自动按行从 1 编号；将来社区自带标号则不再叠加。
+/// </summary>
+public static class RowLabels
+{
+    public static bool HasNumberLabel(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        int i = 0;
+        while (i < name.Length && char.IsWhiteSpace(name[i]))
+        {
+            i++;
+        }
+
+        // 可选的开括号（半角/全角）
+        if (i < name.Length && "([{【（［〔".IndexOf(name[i]) >= 0)
+        {
+            i++;
+        }
+
+        int start = i;
+        while (i < name.Length && char.IsDigit(name[i]))
+        {
+            i++;
+        }
+
+        return i > start;
+    }
+}
