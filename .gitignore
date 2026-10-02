@@ -17,6 +17,10 @@ watchlist.json
 *.rows.json
 *.rows.txt
 
+# OCR 原始转储 / 字形可视化（由 --ocr / --analyze-image --glyphs 生成，属派生数据）
+*.ocr.*
+*.glyphs.*
+
 # 编辑器
 .vs/
 .vscode/
