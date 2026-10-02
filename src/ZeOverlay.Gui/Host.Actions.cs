@@ -70,29 +70,26 @@ public sealed partial class Host
 
     private void OpenLogs() => _preview?.OpenInExplorer(_paths.LogsDirectory, "日志目录尚未创建。");
 
-    private void OpenSettings()
+    /// <summary>用户在左侧设置面板点「应用设置」后，落盘并即时生效。</summary>
+    private void ApplySettingsFromPanel()
     {
-        if (_disposed)
+        if (_disposed || _preview is null)
         {
             return;
         }
 
-        var window = new SettingsWindow(_config, _watchlistConfig, SnapshotRecentNames);
-        window.Owner = _preview;
-        if (window.ShowDialog() != true)
-        {
-            return;
-        }
+        AppConfig updated = _preview.Settings.Configuration;
+        WatchlistConfig updatedWatchlist = _preview.Settings.Watchlist;
 
-        // 未标定的字段（ROI/存储/单显示器）沿用原值；显示/频率/热键整体替换为对话框结果。
-        _config.Overlay = window.Configuration.Overlay;
-        _config.Capture = window.Configuration.Capture;
-        _config.Hotkeys = window.Configuration.Hotkeys;
-        _config.Recognition = window.Configuration.Recognition;
-        _config.Tracking = window.Configuration.Tracking;
+        // 未标定的字段（ROI/存储/单显示器）沿用原值；显示/频率/热键/跟踪整体替换。
+        _config.Overlay = updated.Overlay;
+        _config.Capture = updated.Capture;
+        _config.Hotkeys = updated.Hotkeys;
+        _config.Recognition = updated.Recognition;
+        _config.Tracking = updated.Tracking;
         _trackerOptions.DisappearAfterSeconds = Math.Clamp(_config.Tracking.RowDisappearSeconds, 0.5, 60);
 
-        _watchlistConfig = window.Watchlist;
+        _watchlistConfig = updatedWatchlist;
         WatchlistStore.Save(_paths.WatchlistFile, _watchlistConfig);
         ConfigStore.Save(_paths.ConfigFile, _config);
 
@@ -101,8 +98,8 @@ public sealed partial class Host
             new WatchlistOptions { Threshold = _watchlistConfig.MatchThreshold });
         BuildPipeline();
         ReloadHotkeys();
-        _notice = $"设置已保存：名单 {_watchlist.Entries.Count} 项，阈值 {_watchlistConfig.MatchThreshold:0.##}，排序 {OverlaySort.Parse(_config.Overlay.SortMode)}";
-        _log?.Info($"[设置] 已更新：名单={string.Join('、', _watchlist.Entries)}；阈值={_watchlistConfig.MatchThreshold:0.##}；"
+        _notice = $"设置已应用：名单 {_watchlist.Entries.Count} 项，阈值 {_watchlistConfig.MatchThreshold:0.##}，排序 {OverlaySort.Parse(_config.Overlay.SortMode)}";
+        _log?.Info($"[设置] 已应用：名单={string.Join('、', _watchlist.Entries)}；阈值={_watchlistConfig.MatchThreshold:0.##}；"
             + $"排序={OverlaySort.Parse(_config.Overlay.SortMode)}；采集={_config.Capture.Fps}Hz；识别间隔={Math.Clamp(_config.Recognition.IntervalMs, 200, 5000)}ms");
         BuildRecognitionText(DateTimeOffset.Now, _recognizer?.Name ?? _ocr.Name);
     }

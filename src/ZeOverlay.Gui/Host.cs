@@ -225,7 +225,9 @@ public sealed partial class Host : IDisposable
         VerifyRestoredRoi();
 
         _preview = new PreviewWindow();
-        _preview.BindActions(SelectRoi, Snapshot, OpenShots, OpenLogs, Quit, OpenSettings);
+        _preview.BindActions(SelectRoi, Snapshot, OpenShots, OpenLogs, Quit);
+        _preview.InitializeSettings(_config, _watchlistConfig, SnapshotRecentNames);
+        _preview.SettingsApplied += (_, _) => ApplySettingsFromPanel();
         _preview.Closed += (_, _) => Quit();
         _preview.Show();
 
