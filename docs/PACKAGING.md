@@ -23,6 +23,10 @@ powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip -IncludeCli
 
 # NuGet 直连不稳时走本地代理
 powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Proxy http://127.0.0.1:7897
+
+# 代码签名（可选，需 Windows SDK 的 signtool.exe）：PFX 或证书指纹二选一
+powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip -SignPfx cert.pfx -SignPfxPassword ***
+powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip -SignThumbprint <sha1>
 ```
 
 产物（`publish/` 已在 `.gitignore` 中）：
@@ -77,8 +81,9 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall
 
 ## 已知限制 / 待办
 
-- **无代码签名**：首次运行可能触发 SmartScreen 提示（属预期）。
-- **无自定义图标**：exe 仍是默认图标（未加 `.ico`）。
+- **代码签名**：发布脚本支持 `-SignPfx` / `-SignThumbprint`（需 Windows SDK 的 `signtool.exe`）；
+  **未提供证书时自动跳过**，此时首次运行可能触发 SmartScreen 提示（属预期）。
+- **自定义图标**：已内置 `src/ZeOverlay.Gui/app.ico`；exe 与预览/设置窗口均使用它。
 - 体积 214.9 MB 的大头是 WPF（`Microsoft.Windows.SDK.NET.dll` 23.7 MB、
   `PresentationFramework` 15.4 MB、`System.Windows.Forms` 12.9 MB 等）与原生库。
   WPF **不支持 `PublishTrimmed`**，故不做裁剪；如需更小可评估去掉 Windows SDK 投影依赖。

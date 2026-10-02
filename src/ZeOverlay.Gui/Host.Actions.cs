@@ -77,21 +77,31 @@ public sealed partial class Host
             return;
         }
 
-        var window = new SettingsWindow(_watchlistConfig, SnapshotRecentNames);
+        var window = new SettingsWindow(_config, _watchlistConfig, SnapshotRecentNames);
         window.Owner = _preview;
         if (window.ShowDialog() != true)
         {
             return;
         }
 
-        _watchlistConfig = window.Configuration;
+        // 未标定的字段（ROI/存储/单显示器）沿用原值；显示/频率/热键整体替换为对话框结果。
+        _config.Overlay = window.Configuration.Overlay;
+        _config.Capture = window.Configuration.Capture;
+        _config.Hotkeys = window.Configuration.Hotkeys;
+        _config.Recognition = window.Configuration.Recognition;
+
+        _watchlistConfig = window.Watchlist;
         WatchlistStore.Save(_paths.WatchlistFile, _watchlistConfig);
+        ConfigStore.Save(_paths.ConfigFile, _config);
+
         _watchlist = new Matcher(
             _watchlistConfig.Names,
             new WatchlistOptions { Threshold = _watchlistConfig.MatchThreshold });
         BuildPipeline();
-        _notice = $"关注名单已保存：{_watchlist.Entries.Count} 项，阈值 {_watchlistConfig.MatchThreshold:0.##}";
-        _log?.Info($"[设置] 关注名单已更新：{string.Join('、', _watchlist.Entries)}；阈值={_watchlistConfig.MatchThreshold:0.##}");
+        ReloadHotkeys();
+        _notice = $"设置已保存：名单 {_watchlist.Entries.Count} 项，阈值 {_watchlistConfig.MatchThreshold:0.##}，排序 {OverlaySort.Parse(_config.Overlay.SortMode)}";
+        _log?.Info($"[设置] 已更新：名单={string.Join('、', _watchlist.Entries)}；阈值={_watchlistConfig.MatchThreshold:0.##}；"
+            + $"排序={OverlaySort.Parse(_config.Overlay.SortMode)}；采集={_config.Capture.Fps}Hz；识别间隔={Math.Clamp(_config.Recognition.IntervalMs, 200, 5000)}ms");
         BuildRecognitionText(DateTimeOffset.Now, _recognizer?.Name ?? _ocr.Name);
     }
 

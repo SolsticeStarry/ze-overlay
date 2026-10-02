@@ -21,7 +21,7 @@ C# / .NET 8（`net8.0-windows10.0.19041.0`）+ WPF，识别用 **PP-OCRv3 ONNX**
      → 括号锚定解析 → 行槽位跟踪(+本地倒计时外推) → 名单过滤 → 预览窗口 + 穿透叠加
 ```
 
-**进度：M0~M5 完成；M6 进行中**（识别 12 行 602ms→~70ms，DirectML 默认开启；自包含单文件夹打包 + 启动安装包已完成，见 `PACKAGING.md`；int8 静态量化实测**否决**）。M5 排序/显示风格/刷新频率/热键配置仍待实现。
+**进度：M0~M5 完成；M6 进行中**（识别 12 行 602ms→~70ms，DirectML 默认开启；自包含单文件夹打包 + 启动安装包 + 自定义图标已完成，见 `PACKAGING.md`；代码签名需自备证书；int8 静态量化实测**否决**）。设置窗口已支持排序/显示风格/刷新频率/热键配置。
 
 ## 命令
 
@@ -47,6 +47,8 @@ $cli = "src\ZeOverlay.Cli\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.Cli.exe
 ```powershell
 # 自包含单文件夹发布（目标机无需装 .NET）；-Zip 出 zip，-IncludeCli 附带离线 CLI
 powershell -ExecutionPolicy Bypass -File tools\publish.ps1 [-Zip] [-IncludeCli] [-Proxy http://127.0.0.1:7897]
+# 代码签名（可选，需 Windows SDK 的 signtool）：PFX 或证书指纹
+powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip [-SignPfx cert.pfx -SignPfxPassword ***] [-SignThumbprint <sha1>]
 # 安装到本机 + 建快捷方式；-Uninstall 卸载
 powershell -ExecutionPolicy Bypass -File tools\install.ps1 [-InstallDir <dir>] [-Uninstall]
 ```
@@ -144,4 +146,5 @@ python -m venv .venv-quant
 | DML 比 CPU 还慢 | 每行宽度不同 → DML 反复重编译算子 | `Recognition.FixedInputWidth=640`（或 `--fixed-width 640`） |
 | int8 静态量化后 C# 加载崩 `QLinearMul ... Scale and Zero-point must be a scalar` | 逐元素算子被量化 + per-channel scale 非标量；且**原模型权重存在 `Constant` 节点**（不是 initializer），动态量化只能碰到 MatMul | 只量化 `Conv,MatMul` 并 `--preprocess` 折叠 BN 才可加载；但精度仍崩，最终**放弃 int8** |
 | 量化模型体积几乎不变 | 权重是 `Constant` 节点，ORT 量化器需先 `quant_pre_process` 转 initializer | 别无脑量化；见 `tools/quantize-ppocr-static.py` 注释 |
+| WPF 窗口 `Icon="app.ico"` 运行时报资源找不到 | 相对 pack URI 解析到**入口程序集**，而图标嵌在 Presentation 程序集 | 用显式 URI：`pack://application:,,,/ZeOverlay.Stage.Presentation;component/app.ico` |
 | 解决方案文件名是 `.slnx` | .NET 10 SDK 新默认 | `dotnet build ZeOverlay.slnx` |

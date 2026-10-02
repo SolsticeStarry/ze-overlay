@@ -51,6 +51,12 @@ public sealed class RecognitionConfig
     /// 实测 DML 全批 12 行 ~70ms，比逐行快 1.6×；CPU 上批处理反而更慢。
     /// </summary>
     public int BatchSize { get; set; }
+
+    /// <summary>
+    /// 识别刷新间隔（毫秒）。默认 1000；越小越跟手但越吃 CPU。
+    /// Host 会把它钳制在 200–5000 ms。
+    /// </summary>
+    public int IntervalMs { get; set; } = 1000;
 }
 
 /// <summary>穿透叠加窗口（PLAN 第 8.1 节）。</summary>
@@ -71,6 +77,21 @@ public sealed class OverlayConfig
     public string ExtrapolatedColor { get; set; } = "#FFA5F3FC";
 
     public string LiveColor { get; set; } = "#FFF5F5F0";
+
+    /// <summary>
+    /// 显示排序：`watchlist`（名单/显示顺序，默认）｜`slot`（页-行）｜
+    /// `cooldown`（就绪优先 + 冷却升序）｜`name`（名称）。见 <see cref="ZeOverlay.Shared.OverlaySort"/>。
+    /// </summary>
+    public string SortMode { get; set; } = "watchlist";
+
+    /// <summary>是否在条目前显示 `#页-行`。</summary>
+    public bool ShowPageSlot { get; set; }
+
+    /// <summary>是否为外推（本地推算）条目显示 `~` 标记。</summary>
+    public bool ShowSourceMark { get; set; } = true;
+
+    /// <summary>叠加背景不透明度 0.00–1.00（0 = 完全透明）。</summary>
+    public double BackgroundOpacity { get; set; } = 0.09;
 }
 
 public sealed class CaptureConfig
