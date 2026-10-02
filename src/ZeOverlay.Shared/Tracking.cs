@@ -68,16 +68,22 @@ public sealed record TrackerFrameResult(
 
 public sealed class TrackerOptions
 {
-    /// <summary>连续多少次「该在的页可见却没读到这一行」之后移除槽位。</summary>
+    /// <summary>连续多少次「该在的页可见却没读到这一行」之后移除槽位（诊断用，实际移除以时限为准）。</summary>
     public int MaxConsecutiveMisses { get; set; } = 3;
 
     /// <summary>miss 的最小间隔（秒）：按时间桶计，而不是按帧计。</summary>
     public double MinMissIntervalSeconds { get; set; } = 2.0;
 
+    /// <summary>
+    /// 自动消失时限（秒）：某槽位**所在页正可见**、却超过这么久没扫到数据，就把它移除。
+    /// 默认 5s。翻到别的页不会因此判死（只对“当前可见页”生效）。
+    /// </summary>
+    public double DisappearAfterSeconds { get; set; } = 5.0;
+
     /// <summary>行数不低于基准行数的这个比例时，认为当前显示的是第 1 页。</summary>
     public double PageOneRowRatio { get; set; } = 0.6;
 
-    /// <summary>兜底：距最后一次读到超过这么久就移除。</summary>
+    /// <summary>兜底：距最后一次读到超过这么久就移除（含不可见页/列表消失的情况）。</summary>
     public int MaxAgeSeconds { get; set; } = 300;
 }
 

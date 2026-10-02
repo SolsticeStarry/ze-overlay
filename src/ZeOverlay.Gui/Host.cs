@@ -42,7 +42,8 @@ public sealed partial class Host : IDisposable
     private Pipeline? _pipeline;
     private TrackingStage? _trackingStage;
     private string _recognitionName = string.Empty;
-    private readonly Tracker _tracker = new();
+    private readonly TrackerOptions _trackerOptions = new();
+    private readonly Tracker _tracker;
     private readonly Dictionary<string, int> _recentNameCounts = new(StringComparer.Ordinal);
     private readonly object _recentNamesGate = new();
 
@@ -117,6 +118,10 @@ public sealed partial class Host : IDisposable
         _selectRoiOnly = selectRoiOnly;
         _config = ConfigStore.Load(paths.ConfigFile);
         ApplyStorageConfig();
+
+        // 跟踪器与配置共享同一份选项对象：设置里改「行消失超时」可即时生效。
+        _trackerOptions.DisappearAfterSeconds = Math.Clamp(_config.Tracking.RowDisappearSeconds, 0.5, 60);
+        _tracker = new Tracker(_trackerOptions);
     }
 
     public void Start()

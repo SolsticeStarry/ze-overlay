@@ -89,6 +89,8 @@ public sealed partial class Host
         _config.Capture = window.Configuration.Capture;
         _config.Hotkeys = window.Configuration.Hotkeys;
         _config.Recognition = window.Configuration.Recognition;
+        _config.Tracking = window.Configuration.Tracking;
+        _trackerOptions.DisappearAfterSeconds = Math.Clamp(_config.Tracking.RowDisappearSeconds, 0.5, 60);
 
         _watchlistConfig = window.Watchlist;
         WatchlistStore.Save(_paths.WatchlistFile, _watchlistConfig);

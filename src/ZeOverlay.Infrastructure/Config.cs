@@ -20,6 +20,18 @@ public sealed class AppConfig
     public StorageConfig Storage { get; set; } = new();
 
     public RecognitionConfig Recognition { get; set; } = new();
+
+    public TrackingConfig Tracking { get; set; } = new();
+}
+
+/// <summary>跟踪/消亡参数（M5）。</summary>
+public sealed class TrackingConfig
+{
+    /// <summary>
+    /// 某行「所在页可见」时，超过这么多秒没扫到数据就自动消失。默认 5s（0.5–60）。
+    /// 翻到别的页不会因此判死。
+    /// </summary>
+    public double RowDisappearSeconds { get; set; } = 5.0;
 }
 
 /// <summary>PP-OCR 识别运行时参数（M6）。</summary>

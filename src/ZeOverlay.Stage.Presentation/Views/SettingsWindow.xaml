@@ -111,6 +111,12 @@
                             <TextBox x:Name="RecognitionIntervalBox" Width="70" Height="26" />
                             <TextBlock Text="ms（200–5000；越小越跟手，越吃 CPU）" Foreground="#FF71717A" VerticalAlignment="Center" Margin="8,0,0,0" />
                         </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="行消失超时：" Foreground="#FFE4E4E7" Width="120" VerticalAlignment="Center" />
+                            <TextBox x:Name="RowDisappearBox" Width="70" Height="26" />
+                            <TextBlock Text="秒（0.5–60；某行超过这么久没扫到就自动消失）" Foreground="#FF71717A" VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
