@@ -157,7 +157,7 @@ if (Test-Path $installer) {
     $installBat = Join-Path $guiOut '安装到本机.bat'
     $installBatText = @'
 @echo off
-rem 双击运行：把本目录的程序安装到 %LOCALAPPDATA%\ZeOverlay 并创建快捷方式。
+rem 双击运行：为当前目录的程序创建桌面/开始菜单快捷方式（不复制文件）。
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
 pause
 '@

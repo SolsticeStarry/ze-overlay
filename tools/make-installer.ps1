@@ -180,31 +180,43 @@ try {
     $installCmd = Join-Path $stage 'install.cmd'
     $installCmdText = @'
 @echo off
-setlocal enableextensions
+setlocal enableextensions enabledelayedexpansion
 set "HERE=%~dp0"
 set "PAYLOAD=%HERE%payload.zip"
 set "LOG=%TEMP%\ze-install.log"
-echo [%DATE% %TIME%] start ZE_INSTALL_DIR="%ZE_INSTALL_DIR%" HERE="%HERE%" > "%LOG%"
+echo [%DATE% %TIME%] start ZE_INSTALL_DIR="%ZE_INSTALL_DIR%" ZE_INSTALL_ROOT="%ZE_INSTALL_ROOT%" HERE="%HERE%" > "%LOG%"
 
-set "TARGET=%ZE_INSTALL_DIR%"
+rem 目标根目录：
+rem   ZE_INSTALL_DIR  = 精确目录（CI 用，直接用）
+rem   否则取 ZE_INSTALL_ROOT 或弹框选择“安装到哪个目录/盘”，再在其下新建 ZeOverlay 子文件夹
+set "TARGET=!ZE_INSTALL_DIR!"
 if not defined TARGET (
-  for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%install.ps1" -PickFolder`) do set "TARGET=%%I"
-)
-echo target="%TARGET%" >> "%LOG%"
-if not defined TARGET (
-  echo cancelled >> "%LOG%"
-  echo.
-  echo 已取消安装。
-  if not defined ZE_QUIET pause
-  exit /b 1
+  set "ROOT=!ZE_INSTALL_ROOT!"
+  if not defined ROOT (
+    for /f "usebackq delims=" %%I in (`powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%install.ps1" -PickFolder`) do set "ROOT=%%I"
+  )
+  echo picked_root="!ROOT!" >> "%LOG%"
+  if not defined ROOT (
+    echo cancelled >> "%LOG%"
+    echo.
+    echo 已取消安装。
+    if not defined ZE_QUIET pause
+    exit /b 1
+  )
+  for %%A in ("!ROOT!") do set "LEAF=%%~nxA"
+  set "TARGET=!ROOT!\ZeOverlay"
+  if /I "!LEAF!"=="ZeOverlay" set "TARGET=!ROOT!"
 )
 
-echo 安装位置: %TARGET%
-if not exist "%TARGET%" mkdir "%TARGET%"
+rem 程序本体（含全部依赖）解压到 app\，第一层只留启动器与卸载入口。
+set "APPDIR=!TARGET!\app"
+echo target="!TARGET!" app="!APPDIR!" >> "%LOG%"
+echo 安装位置: !TARGET!
+if not exist "!APPDIR!" mkdir "!APPDIR!"
 
 echo 正在展开文件，请稍候...
 echo expanding >> "%LOG%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '%PAYLOAD%' -DestinationPath '%TARGET%' -Force" >> "%LOG%" 2>&1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '%PAYLOAD%' -DestinationPath '!APPDIR!' -Force" >> "%LOG%" 2>&1
 if errorlevel 1 (
   echo 解压失败。>> "%LOG%"
   echo 解压失败。
@@ -212,15 +224,18 @@ if errorlevel 1 (
   exit /b 1
 )
 
+rem 顶层入口（用 PowerShell 以 Unicode 安全方式写入，避免 cmd 写坏中文文件名）
+powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%install.ps1" -WriteLaunchers -Root "!TARGET!" >> "%LOG%" 2>&1
+
 set "OPTS="
 if defined ZE_QUIET set "OPTS=-NoDesktopShortcut -NoStartMenuShortcut"
 if defined ZE_LAUNCH set "OPTS=%OPTS% -Launch"
 
 echo 正在创建快捷方式...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%install.ps1" -Source "%TARGET%" -InstallDir "%TARGET%" %OPTS% >> "%LOG%" 2>&1
+powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%install.ps1" -AppDir "!APPDIR!" %OPTS% >> "%LOG%" 2>&1
 
 echo.
-echo 安装完成：%TARGET%\ZeOverlay.Gui.exe
+echo 安装完成：!APPDIR!\ZeOverlay.Gui.exe
 echo done >> "%LOG%"
 if not defined ZE_QUIET pause
 exit /b 0
