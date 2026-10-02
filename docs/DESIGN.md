@@ -23,7 +23,7 @@ S0 采集 → S1 行分析 → S2 字形/裁剪 → S3 识别 → S4 解析 → 
 | M3 跟踪 + 外推 | ✅（行槽位身份） |
 | M4 名称 OCR + 名单匹配 | ✅（阈值实测校准） |
 | M5 交互层 | ✅ 穿透叠加 / 设置窗口（名单·显示·频率·热键）/ 名单增删 / 一键加入 |
-| M6 性能与打包 | 🟡 识别 12 行 **602ms → ~70ms**（DML + 固定宽 + 全批）；**自包含单文件夹 + 启动安装包已完成**（`PACKAGING.md`）；**int8 静态量化已实测否决**（§3.1/§5） |
+| M6 性能与打包 | 🟡 识别 12 行 **602ms → ~70ms**（DML + 固定宽 + 全批）；**自包含单文件夹 + 单文件自解压安装器已完成**（`PACKAGING.md`）；**int8 静态量化已实测否决**（§3.1/§5） |
 
 - 构建 **0 警告 0 错误**；单测 **141 / 141**。
 - 实测效果：**13 个神器 ↔ 13 条跟踪，零重复**；倒计时 1s/1s 递减，归零转 `[R]`。
@@ -153,7 +153,7 @@ S0 采集 → S1 行分析 → S2 字形/裁剪 → S3 识别 → S4 解析 → 
   - ORT 工作线程在两次 Run 间自旋会白占 CPU → `Recognition.AllowSpinning=false`（默认）。
   - 本机 `Process.TotalProcessorTime` 失真，**绝对 CPU 数字不可信**，需真机复测。
   - CUDA 方案体积 **+约 2.4GB**（ORT CUDA EP 643MB + cuBLAS 753 + cuDNN 961），性价比低。
-- **打包**：自包含单文件夹（win-x64）已落地，`tools/publish.ps1` 发布 + `tools/install.ps1` 安装；剔除运行时无用的 det 模型与 pdb；实测文件夹 214.9 MB / zip 91.8 MB，单文件夹下 DML 正常加载。详见 `PACKAGING.md`。
+- **打包**：自包含单文件夹（win-x64）已落地，`tools/publish.ps1` 发布 + `tools/install.ps1` 安装；剔除运行时无用的 det 模型与 pdb；实测文件夹 214.9 MB / zip 91.8 MB，单文件夹下 DML 正常加载。另有**单文件自解压安装器** `tools/make-installer.ps1`（Windows 自带 IExpress）：约 90.7 MB，用户自选路径、自动展开 283 文件并建快捷方式。详见 `PACKAGING.md`。
 - 待做：输入宽度收敛 / ONNX arena 收敛；自定义图标与代码签名。
 
 ### 测试策略

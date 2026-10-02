@@ -47,6 +47,8 @@ $cli = "src\ZeOverlay.Cli\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.Cli.exe
 ```powershell
 # 自包含单文件夹发布（目标机无需装 .NET）；-Zip 出 zip，-IncludeCli 附带离线 CLI
 powershell -ExecutionPolicy Bypass -File tools\publish.ps1 [-Zip] [-IncludeCli] [-Proxy http://127.0.0.1:7897]
+# 打包成**单个自解压安装器 .exe**（IExpress；用户自选路径、自动展开、建快捷方式）
+powershell -ExecutionPolicy Bypass -File tools\make-installer.ps1 [-Out <exe>] [-Icon <ico>]
 # 代码签名（可选，需 Windows SDK 的 signtool）：PFX 或证书指纹
 powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip [-SignPfx cert.pfx -SignPfxPassword ***] [-SignThumbprint <sha1>]
 # 安装到本机 + 建快捷方式；-Uninstall 卸载
@@ -147,4 +149,6 @@ python -m venv .venv-quant
 | int8 静态量化后 C# 加载崩 `QLinearMul ... Scale and Zero-point must be a scalar` | 逐元素算子被量化 + per-channel scale 非标量；且**原模型权重存在 `Constant` 节点**（不是 initializer），动态量化只能碰到 MatMul | 只量化 `Conv,MatMul` 并 `--preprocess` 折叠 BN 才可加载；但精度仍崩，最终**放弃 int8** |
 | 量化模型体积几乎不变 | 权重是 `Constant` 节点，ORT 量化器需先 `quant_pre_process` 转 initializer | 别无脑量化；见 `tools/quantize-ppocr-static.py` 注释 |
 | WPF 窗口 `Icon="app.ico"` 运行时报资源找不到 | 相对 pack URI 解析到**入口程序集**，而图标嵌在 Presentation 程序集 | 用显式 URI：`pack://application:,,,/ZeOverlay.Stage.Presentation;component/app.ico` |
+| 生成的 `.bat/.cmd` 一运行就报一堆「不是内部或外部命令」 | PS 5.1 的 `Set-Content -Encoding OEM` **会写 UTF-8 BOM**，cmd 把 BOM 当命令 | 用 `Write-OemFile`（`[IO.File]::WriteAllText` + cp936 + CRLF，无 BOM）；见三个打包脚本 |
+| IExpress 安装器反复运行失败/无反应 | 它固定解压到 `%TEMP%\IXP000.TMP`，上次异常退出残留会被占用 | 清掉 `IXP000.TMP` 再试；正常退出会自清理 |
 | 解决方案文件名是 `.slnx` | .NET 10 SDK 新默认 | `dotnet build ZeOverlay.slnx` |

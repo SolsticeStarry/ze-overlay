@@ -52,22 +52,21 @@ publish/ZeOverlay-win-x64.zip       仅 -Zip 时生成
 
 ## 安装 / 卸载
 
-安装器只做两件事：把发布目录复制到本机；建桌面 / 开始菜单快捷方式。
+安装器（`install.ps1`）负责创建/删除快捷方式；它**不复制文件**，只对已就位的程序建快捷方式。
 
 ```powershell
-# 双击发布包里的「安装到本机.bat」，或命令行：
-powershell -ExecutionPolicy Bypass -File install.ps1
+# 为程序目录创建桌面 / 开始菜单快捷方式（缺省自动探测 exe 所在目录）
+powershell -ExecutionPolicy Bypass -File install.ps1 -AppDir D:\Tools\ZeOverlay\app
 
-# 指定位置、跳过桌面快捷方式、装完即启动
-powershell -ExecutionPolicy Bypass -File install.ps1 -InstallDir D:\Tools\ZeOverlay -NoDesktopShortcut -Launch
+# 跳过桌面快捷方式、装完即启动
+powershell -ExecutionPolicy Bypass -File install.ps1 -AppDir D:\Tools\ZeOverlay\app -NoDesktopShortcut -Launch
 
-# 卸载（删快捷方式 + 安装目录）
-powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall
+# 卸载（删快捷方式 + 整个安装根目录）
+powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall -AppDir D:\Tools\ZeOverlay\app -Root D:\Tools\ZeOverlay
 ```
 
-- 默认安装到 `%LOCALAPPDATA%\ZeOverlay`。
-- 覆盖安装时**保留**已有的 `config.json` / `watchlist.json` / `shots` / `logs`。
-- 安装目录内会生成 `卸载.bat`。
+- 快捷方式指向 `app\ZeOverlay.Gui.exe`，工作目录为 `app\`。
+- `config.json` / `watchlist.json` / `shots` / `logs` 运行时生成在 **exe 旁（即 `app\`）**。
 
 ## 实测（2026-10-02，win-x64，Release）
 
@@ -78,6 +77,56 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall
 | 自包含启动 | ✅ 目标机无需 .NET；启动日志正常 |
 | **DirectML 在单文件夹下加载** | ✅ 日志 `PP-OCRv3-rec(6624 类)+DML`，无缺 DLL 崩溃 |
 | 安装/卸载可逆 | ✅ 复制、桌面/开始菜单快捷方式、卸载均验证通过 |
+
+## 单文件安装程序（.exe，给最终用户）
+
+把发布目录打成**一个自解压 `.exe`**，双击即可安装；用 Windows 自带的 IExpress，目标机无需预装任何东西。
+
+```powershell
+# 先发布，再打包安装器（默认读 publish\ZeOverlay，输出 publish\ZeOverlay-Setup.exe）
+powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip
+powershell -ExecutionPolicy Bypass -File tools\make-installer.ps1
+
+# 指定路径 / 顺带签名
+powershell -ExecutionPolicy Bypass -File tools\make-installer.ps1 -Out publish\ZeOverlay-Setup.exe -SignPfx cert.pfx -SignPfxPassword ***
+```
+
+安装器运行流程：
+
+1. 自解压到 `%TEMP%\IXP000.TMP`（内含 `payload.zip` / `install.cmd` / `install.ps1`）；
+2. 弹出**「选择安装位置」文件夹对话框**，这里选的是**父目录 / 盘符**（默认桌面）；
+3. 在所选目录下**自动新建 `ZeOverlay` 子文件夹**（若所选目录本身已叫 `ZeOverlay` 则直接用它）；
+4. 程序本体（`exe` + 全部依赖 + `models`）解压进 `ZeOverlay\app\`；
+5. `ZeOverlay\` **第一层只写两个入口**（`启动 ZeOverlay.bat`、`卸载.bat`）并创建桌面 / 开始菜单快捷方式。
+
+```
+<所选父目录>\ZeOverlay\        ← 用户看到的目录，保持清爽
+    启动 ZeOverlay.bat          ← 双击启动
+    卸载.bat                   ← 卸载
+    app\                       ← 程序本体：exe + 全部 DLL / 运行时 / models
+        ZeOverlay.Gui.exe
+        ...
+```
+
+例：选择「桌面」→ 安装到 `桌面\ZeOverlay\`，其第一层只有 2 个 bat + `app\`，
+依赖再也不会铺满桌面。
+
+| 项 | 值 |
+|---|---|
+| 安装器 | `publish\ZeOverlay-Setup.exe`，**约 90.7 MB**（内嵌 92 MB payload.zip） |
+| 展开结果 | 283 文件 / 215 MB（含 `DirectML.dll`、`models/`） |
+| 卸载 | 安装目录内 `卸载.bat`，或 `install.ps1 -Uninstall` |
+
+**无人值守测试**：设置环境变量后运行可跳过对话框（供 CI 使用）——
+
+```powershell
+# ZE_INSTALL_ROOT：父目录；安装器会在其下建 ZeOverlay 子文件夹
+$env:ZE_INSTALL_ROOT = "$env:TEMP"; $env:ZE_QUIET = '1'
+& publish\ZeOverlay-Setup.exe      # → %TEMP%\ZeOverlay\
+
+# ZE_INSTALL_DIR：精确目录（直接用，不再加子文件夹）
+# $env:ZE_INSTALL_DIR = "$env:TEMP\my-ze"; $env:ZE_QUIET = '1'
+```
 
 ## 已知限制 / 待办
 
