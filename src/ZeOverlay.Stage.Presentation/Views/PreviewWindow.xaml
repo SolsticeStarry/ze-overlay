@@ -6,44 +6,54 @@
         Icon="pack://application:,,,/ZeOverlay.Stage.Presentation;component/app.ico"
         Height="800"
         Width="1420"
+        MinHeight="600"
+        MinWidth="900"
         Background="#FF1B1B1F"
         WindowStartupLocation="Manual">
 
     <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="620"/>
-            <ColumnDefinition Width="10"/>
+            <ColumnDefinition x:Name="SettingsColumn" Width="620"/>
+            <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- 左：常驻设置面板（不再用弹窗/设置按钮） -->
-        <views:SettingsPanel x:Name="SettingsPanelControl" Grid.Column="0"/>
+        <!-- 顶部工具栏（整宽） -->
+        <Border Grid.Row="0" Grid.ColumnSpan="3"
+                Background="#FF232329" BorderBrush="#FF3F3F46" BorderThickness="1"
+                CornerRadius="6" Padding="8,6" Margin="0,0,0,8">
+            <WrapPanel>
+                <Button x:Name="SettingsToggleButton" Content="◀ 隐藏设置" Click="OnToggleSettingsClick" Margin="0,0,12,0" />
+                <Button x:Name="SelectRoiButton" Content="重新框选" Click="OnSelectRoiClick" />
+                <Button x:Name="SnapshotButton" Content="保存截图" Click="OnSnapshotClick" />
+                <Button x:Name="PauseButton" Content="暂停采集" Click="OnPauseClick" />
+                <Button x:Name="OpenShotsButton" Content="打开截图目录" Click="OnOpenShotsClick" />
+                <Button x:Name="OpenLogsButton" Content="打开日志目录" Click="OnOpenLogsClick" />
+                <Button x:Name="QuitButton" Content="退出" Click="OnQuitClick" />
+            </WrapPanel>
+        </Border>
+
+        <!-- 左：设置面板 -->
+        <views:SettingsPanel x:Name="SettingsPanelControl" Grid.Row="1" Grid.Column="0"/>
+
+        <!-- 可拖动分隔条 -->
+        <GridSplitter x:Name="SettingsSplitter" Grid.Row="1" Grid.Column="1"
+                      Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                      Background="#FF3F3F46" ResizeBehavior="PreviousAndNext" />
 
         <!-- 右：预览 -->
-        <Grid Grid.Column="2">
+        <Grid Grid.Row="1" Grid.Column="2" Margin="6,0,0,0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0"
-                    Background="#FF232329"
-                    BorderBrush="#FF3F3F46"
-                    BorderThickness="1"
-                    CornerRadius="6"
-                    Padding="10,8">
-                <TextBlock x:Name="StatusText"
-                           Foreground="#FFE4E4E7"
-                           FontFamily="Consolas"
-                           FontSize="12"
-                           TextWrapping="Wrap"
-                           Text="初始化中…" />
-            </Border>
-
-            <Border Grid.Row="1"
-                    Margin="0,8,0,8"
                     Background="#FF000000"
                     BorderBrush="#FF3F3F46"
                     BorderThickness="1"
@@ -63,13 +73,14 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="2"
+            <Border Grid.Row="1"
+                    Margin="0,8,0,0"
                     Background="#FF18181B"
                     BorderBrush="#FF22D3EE"
                     BorderThickness="1"
                     CornerRadius="6"
                     Padding="10,8"
-                    MaxHeight="240">
+                    MaxHeight="220">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <TextBlock x:Name="RecognitionText"
                                Foreground="#FFA5F3FC"
@@ -79,15 +90,18 @@
                                Text="识别结果：（尚未识别）" />
                 </ScrollViewer>
             </Border>
-
-            <WrapPanel Grid.Row="3">
-                <Button x:Name="SelectRoiButton" Content="重新框选" Click="OnSelectRoiClick" />
-                <Button x:Name="SnapshotButton" Content="保存截图" Click="OnSnapshotClick" />
-                <Button x:Name="PauseButton" Content="暂停采集" Click="OnPauseClick" />
-                <Button x:Name="OpenShotsButton" Content="打开截图目录" Click="OnOpenShotsClick" />
-                <Button x:Name="OpenLogsButton" Content="打开日志目录" Click="OnOpenLogsClick" />
-                <Button x:Name="QuitButton" Content="退出" Click="OnQuitClick" />
-            </WrapPanel>
         </Grid>
+
+        <!-- 底部状态栏（整宽） -->
+        <Border Grid.Row="2" Grid.ColumnSpan="3"
+                Background="#FF18181B" BorderBrush="#FF3F3F46" BorderThickness="1"
+                CornerRadius="6" Padding="10,6" Margin="0,8,0,0">
+            <TextBlock x:Name="StatusText"
+                       Foreground="#FFE4E4E7"
+                       FontFamily="Consolas"
+                       FontSize="12"
+                       TextWrapping="Wrap"
+                       Text="初始化中…" />
+        </Border>
     </Grid>
 </Window>

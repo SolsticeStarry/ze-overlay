@@ -18,6 +18,7 @@ public partial class PreviewWindow : Window
     private Action? _onOpenShots;
     private Action? _onOpenLogs;
     private Action? _onQuit;
+    private bool _settingsCollapsed;
 
     public PreviewWindow()
     {
@@ -99,8 +100,17 @@ public partial class PreviewWindow : Window
         PreviewImage.Source = image;
     }
 
-    private void OnSelectRoiClick(object sender, RoutedEventArgs e) => _onSelectRoi?.Invoke();
+    /// <summary>折叠/展开左侧设置面板，让预览获得更大空间。</summary>
+    private void OnToggleSettingsClick(object sender, RoutedEventArgs e)
+    {
+        _settingsCollapsed = !_settingsCollapsed;
+        SettingsColumn.Width = _settingsCollapsed ? new GridLength(0) : new GridLength(620);
+        SettingsPanelControl.Visibility = _settingsCollapsed ? Visibility.Collapsed : Visibility.Visible;
+        SettingsSplitter.Visibility = _settingsCollapsed ? Visibility.Collapsed : Visibility.Visible;
+        SettingsToggleButton.Content = _settingsCollapsed ? "显示设置 ▶" : "◀ 隐藏设置";
+    }
 
+    private void OnSelectRoiClick(object sender, RoutedEventArgs e) => _onSelectRoi?.Invoke();
     private void OnSnapshotClick(object sender, RoutedEventArgs e) => _onSnapshot?.Invoke();
 
     private void OnOpenShotsClick(object sender, RoutedEventArgs e) => _onOpenShots?.Invoke();
