@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>ZeOverlay.Stage.ScreenCapture</RootNamespace>
+    <AssemblyName>ZeOverlay.Stage.ScreenCapture</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZeOverlay.Shared\ZeOverlay.Shared.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Win32\ZeOverlay.Win32.csproj" />
+  </ItemGroup>
+
+</Project>
+

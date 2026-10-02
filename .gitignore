@@ -27,3 +27,8 @@ watchlist.json
 .venv/
 __pycache__/
 *.pyc
+
+# 量化用隔离环境与派生模型（构建期产物，不入库）
+.venv-quant/
+models/*.int8.onnx
+models/*.pre.onnx

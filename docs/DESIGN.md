@@ -7,24 +7,25 @@
 
 ## 1. 现状
 
-**CS2（ZE 模式）神器列表识别 + 点击穿透叠加**，C# / .NET 8（`net8.0-windows10.0.19041.0`）+ WPF，识别用 **PP-OCRv3 ONNX**。
+**CS2（ZE 模式）神器列表识别 + 点击穿透叠加**，C# / .NET 8 + WPF，识别用 **PP-OCRv3 ONNX**。
+
+代码按**数据管线阶段**划分为 14 个模块（清单见 `AGENTS.md`「代码分层」）：
 
 ```
-WGC/GDI 截屏 → ROI 裁剪 → 行剖分 + 等距网格吸附 → 逐行 PP-OCR
-            → 括号锚定解析 → 行槽位跟踪(+本地倒计时外推) → 名单过滤 → 预览窗口 + 穿透叠加
+S0 采集 → S1 行分析 → S2 字形/裁剪 → S3 识别 → S4 解析 → S5 跟踪 → S6 名单匹配 → S7 展示
 ```
 
-| 阶段 | 状态 |
+| 里程碑 | 状态 |
 |---|---|
-| M0 截屏 + ROI + 预览 | ✅ 完成（像素级验证） |
-| M1 行切分 + 翻页检测 | ✅ 完成（翻页判据真机验证） |
-| M2 字形识别 | ✅ 完成（字形切分目视验证；分类用 PP-OCR） |
-| M3 跟踪 + 外推 | ✅ 完成（行槽位身份） |
-| M4 名称 OCR + 名单匹配 | ✅ 完成（阈值实测校准） |
-| M5 交互层 | ✅ 穿透叠加、独立设置窗口、名单增删/阈值、一键加入 |
-| M6 性能与打包 | 🟡 进行中：相同像素复用行分析；**识别 12 行 602ms → ~150ms**（CTC 解码 + 预处理修复）；线程/自旋参数化；打包待验证 |
+| M0 截屏 + ROI + 预览 | ✅（像素级验证） |
+| M1 行切分 + 翻页检测 | ✅（翻页判据真机验证） |
+| M2 字形识别 | ✅（字形切分目视验证） |
+| M3 跟踪 + 外推 | ✅（行槽位身份） |
+| M4 名称 OCR + 名单匹配 | ✅（阈值实测校准） |
+| M5 交互层 | ✅ 穿透叠加 / 设置窗口 / 名单增删 / 一键加入 |
+| M6 性能与打包 | 🟡 识别 12 行 **602ms → ~70ms**（DML + 固定宽 + 全批）；**自包含单文件夹 + 启动安装包已完成**（`PACKAGING.md`）；**int8 静态量化已实测否决**（§3.1/§5） |
 
-- 构建 **0 警告 0 错误**；单测 **133 / 133**；代码约 **7200 行**（60 文件）。
+- 构建 **0 警告 0 错误**；单测 **141 / 141**。
 - 实测效果：**13 个神器 ↔ 13 条跟踪，零重复**；倒计时 1s/1s 递减，归零转 `[R]`。
 
 ---
@@ -59,6 +60,8 @@ WGC/GDI 截屏 → ROI 裁剪 → 行剖分 + 等距网格吸附 → 逐行 PP-O
 | 预处理能救系统 OCR | 拉伸/二值化/2×放大**全部更差（0 行）** | 不再投入，直接换引擎 |
 | **int8 动态量化更快**（2026-10-02） | 只量化到 MatMul（36 个 Conv 未量化），模型 10.2→10.3MB，单行 **9ms→21ms（更慢）** | 放弃动态量化（静态量化需校准，另议） |
 | **CPU 上批处理更快**（2026-10-02） | 裸 ORT：batch=12 每行 **34ms** vs 逐行 **9ms**；既有记录 batch=6 也更慢 | **不批处理**，逐行 |
+| **int8 静态量化能提速**（2026-10-02） | 37 条真实行校准 + BN 折叠后：输出与 fp32 逐时间步 argmax **一致率仅 62.5%**（解码乱码）；速度 CPU **236 vs 219ms**、DML 墙钟 **245 vs 78ms**（**两者都更慢**） | **放弃 int8**，维持 fp32 + DML + 固定宽 + 全批 |
+| **原始 rec 模型权重是 initializer**（2026-10-02） | onnx 里权重存在 **`Constant` 节点**，initializer 数为 0 → 动态/静态量化器都无法正常量化 Conv | 量化前必须 `quant_pre_process` 转 initializer（但精度仍崩，见上） |
 | 全链路慢在预处理 | 拆解 12 行 602ms：**CTC 解码 397ms + ONNX Run 144ms + FillInput 53ms** | 修解码与预处理，不碰模型 |
 
 ### 3.2 采集与标定
@@ -74,7 +77,7 @@ WGC/GDI 截屏 → ROI 裁剪 → 行剖分 + 等距网格吸附 → 逐行 PP-O
 
 ### 3.4 识别
 - 亮字提取：**两段式 Otsu**（单次落在背景内、迭代到收敛劈开字芯）。
-- 字形切分：列投影，`MinGap = 0`；可视化工具 `--analyze-image --glyphs`。
+- 字形切分：列投影，`MinGap = 0`；可视化工具 `ZeOverlay.Cli --analyze-image --glyphs`。
 - **PP-OCRv3 rec，不接检测（det）模型**：行切分已做好，按行裁图送 rec 即可，省掉 DB 检测整套后处理。
   - 模型来源：**PyPI** 的 `rapidocr_onnxruntime`（内置 ONNX）+ `paddleocr`（字典）；GitHub/HF 被墙。
   - 按**字形实际边界**裁剪：按估计边界留空白时 PP-OCR 会在行末**幻觉**出字符，导致每帧换 key。
@@ -114,6 +117,8 @@ WGC/GDI 截屏 → ROI 裁剪 → 行剖分 + 等距网格吸附 → 逐行 PP-O
 | PP-OCR **DML + 固定宽 640**（12 行） | **~108 ms**（ONNX Run ~100ms）；比 CPU 快 **~1.4×**，进程 CPU 明显更低 |
 | PP-OCR **DML + 固定宽 640 + 全批 12**（12 行） | **~70 ms**；比逐行 DML 再快 **1.6×**，比 CPU 快 **~2.1×** |
 | PP-OCR **DML 不固定宽度**（12 行） | ~450 ms：每换一次宽度就重编译算子，**慢 ~3×** |
+| **int8 静态量化**（QDQ + BN 折叠 + 37 行校准） | 精度崩（与 fp32 逐时间步 argmax 一致率 **62.5%**，解码乱码）；CPU Run **236 vs 219ms**、DML 墙钟 **245 vs 78ms**，**两 EP 都更慢** |
+| **自包含发布包**（win-x64，Release） | 文件夹 283 文件 / **214.9 MB**；zip **91.8 MB**；单文件夹形态下 **DML 正常加载**（详见 `PACKAGING.md`） |
 | 识别正确性（修复后） | `panel_02_human` **12/12** 解析、`live_roi_01` 1/1，逐字与修复前一致 |
 | 识别正确性 | 离线样本 **23/23 行**（样本 #1 11 行 + #2 12 行） |
 | 列表几何 | 11~12 行 / **行距 30 px** / 左边界 ≈**x1575** / **顶部锚定** |
@@ -131,30 +136,26 @@ WGC/GDI 截屏 → ROI 裁剪 → 行剖分 + 等距网格吸附 → 逐行 PP-O
 - **一键加入**：已实现展示「最近识别到的神器名」并点选加入名单（数据来源 `_recentNames`）。
 
 ### M6 性能与打包
-- 2026-10-02：`RowAnalysisCache`（相同像素复用行剖分）+ CTC 解码改用底层 span + `FillInput` 预计算/直写 buffer。单测 133/133；构建 0 警告 0 错误。
-- **识别 12 行 602ms → ~150ms（约 4×）**，逐字正确性不变；瓶颈从「解码」转为「ONNX Run」（占 ~85%）。
-  - CTC 解码 397ms → **~2ms**：原来用 `Tensor<T>` 多维索引器逐元素取值（12 行约 1200 万次带边界检查的索引），改为直读 `DenseTensor<float>.Buffer` 的 span。
-  - `FillInput` 53ms → **~4ms**：预计算每列源坐标与权重（原来放在 y 循环内层重复算 48 次），并直写底层 buffer。
-- **被否掉的两条路**（别再走）：
-  - **动态 int8 量化**：该模型 36 Conv + 32 BN，`quantize_dynamic` 只量化 MatMul，模型不变小（10.2→10.3MB），还更慢（单行 9→21ms）。
-  - **CPU 批处理**：裸 ORT batch=12 每行 34ms vs 逐行 9ms（与早先 batch=6 更慢一致）。
-- **线程/自旋**：新增 `config.json` 的 `Recognition.IntraOpThreads`（0=自动）与 `Recognition.AllowSpinning`（默认 false）。默认 ORT 工作线程在两次 Run 之间自旋会白占 CPU；`allow_spinning=0` 实测不增延迟。**但本机 `Process.TotalProcessorTime` 失真（单线程忙等 300ms 只读到 31~94ms），绝对 CPU 数字不可信，需真机复测。**
-- 新增离线量测命令 `--bench-ocr`（见 `AGENTS.md`）。
-- **DirectML（通用 GPU）已实测**（2026-10-02）：
-  - 包：`Microsoft.ML.OnnxRuntime.DirectML 1.24.4`（自带 CPU EP）。**必须**把传递依赖 `Microsoft.AI.DirectML` 的 `DirectML.dll`（win-x64，17.7MB）显式复制到 exe 旁——它的 build targets 不会自动导入，否则运行时去加载 System32 的旧版，直接崩（`0x80070057`）。
-  - **DML 对输入形状敏感**：逐行宽度不同（394~624）会反复重编译算子 → 450ms，**比 CPU 慢 3×**；改成**固定宽度 640**（保持长宽比、右侧补灰）后 **~108ms，比 CPU 快 ~1.4×**，结果逐字一致。
-  - **批处理**：DML 上把 12 行合成一批再快 1.6×（**~70ms**，比 CPU 快 ~2.1×）；CPU 上批处理更慢，故批大小按 EP 自动（DML=12，CPU=1）。
-  - 代价：**+约 23MB**（DirectML.dll 17.7MB + DML 版 ORT 16.5MB），需 DX12 GPU；已在会话创建失败时**自动回退 CPU**。
-  - 配置：`Recognition.ExecutionProvider`（**默认 `directml`**，会话创建失败自动回退 `cpu`）、`Recognition.FixedInputWidth`（DML 未配置时默认 640）、`Recognition.BatchSize`（0=自动：DML 12 / CPU 1）。
-- 优化方向（下一步）：ONNX Run 已近 CPU 天花板 → int8 **静态**量化（需校准集）或 GPU；输入宽度收敛；ONNX arena 收敛。
-- **体积实测（关键）**：CUDA 方案 **+约 2.4GB**（`onnxruntime_providers_cuda.dll` 643MB + cuBLAS 753MB + cuDNN 961MB），远超当初「数百 MB」估计。另：当前 Release 输出 218MB 里约 **148MB 是非 Windows 的 ONNX 运行时**，做 `RuntimeIdentifier=win-x64` 发布前不要评估体积。
-- 单文件 exe（self-contained）+ 日志/截图滚动清理复核。
-- **CUDA 取舍**：先以 CPU 优化为主；CUDA 作为可选加速包，需权衡 +2.4GB 与和 CS2 抢 GPU。
+- 已落地：`Cache`（相同像素复用行分析）、CTC 解码改读底层 span、`FillInput` 预计算列并直写 buffer → 12 行 **602ms → ~150ms**（CPU）。
+- 进一步：**DirectML + 固定宽 640 + 全批 12 → ~70ms**（比 CPU 快 ~2.1×）；`Recognition.ExecutionProvider` 默认 `directml`，会话创建失败**自动回退 CPU**；代价 +~23MB 与 DX12 依赖。
+- **被否掉的路**（别再走）：
+  - **动态 int8 量化**：该模型 36 Conv，`quantize_dynamic` 只量化 MatMul，模型不变小且更慢（单行 9→21ms）。要 int8 必须**静态 + 校准集**。
+  - **静态 int8 量化**（2026-10-02，`tools/quantize-ppocr-static.py`）：用 37 条真实行校准、`quant_pre_process` 折叠 BN、只量化 `Conv,MatMul` 后可加载，但**精度崩**（与 fp32 逐时间步 argmax 一致率 62.5%）且**两个 EP 都更慢**（CPU Run 236 vs 219ms，DML 墙钟 245 vs 78ms）。**放弃 int8**。
+    - 附加坑：原始模型权重存在 `Constant` 节点，量化器需先 `quant_pre_process` 转 initializer；逐元素算子被量化还会让 C# ORT 报 `QLinearMul ... must be a scalar`。
+  - **CPU 批处理**：batch=12 每行 34ms vs 逐行 9ms。
+  - **DML 不固定宽度**：逐行宽度不同 → 反复重编译算子，慢 3×。
+- 关键事实：
+  - DML EP 需把 `Microsoft.AI.DirectML` 的 win-x64 `DirectML.dll` 复制到 exe 旁（传递依赖，targets 不自动导入），否则崩 `0x80070057`。
+  - ORT 工作线程在两次 Run 间自旋会白占 CPU → `Recognition.AllowSpinning=false`（默认）。
+  - 本机 `Process.TotalProcessorTime` 失真，**绝对 CPU 数字不可信**，需真机复测。
+  - CUDA 方案体积 **+约 2.4GB**（ORT CUDA EP 643MB + cuBLAS 753 + cuDNN 961），性价比低。
+- **打包**：自包含单文件夹（win-x64）已落地，`tools/publish.ps1` 发布 + `tools/install.ps1` 安装；剔除运行时无用的 det 模型与 pdb；实测文件夹 214.9 MB / zip 91.8 MB，单文件夹下 DML 正常加载。详见 `PACKAGING.md`。
+- 待做：输入宽度收敛 / ONNX arena 收敛；自定义图标与代码签名。
 
 ### 测试策略
 1. 分层单测：配置、行切分、列切分、状态机、外推与消亡、名单匹配——**合成数据 + 假后端**。
 2. 假后端：识别接口先返回预设值，全链路可测、不依赖模型。
-3. 回归集：`docs/ref/` 下 4 张真实截图 + `--recognize`（输入图 → 期望结构化结果）。
+3. 回归集：`docs/ref/` 下 4 张真实截图 + `ZeOverlay.Cli --recognize`（输入图 → 期望结构化结果）。
 4. 异常用例：空列表、翻页瞬间、行数突变、全冷却、全 Ready、超长名称、名称含符号、名单为空。
 
 ---
@@ -165,9 +166,9 @@ WGC/GDI 截屏 → ROI 裁剪 → 行剖分 + 等距网格吸附 → 逐行 PP-O
 |---|---|---|
 | 1 | M5 后续增强 | 排序、显示风格、刷新频率、热键配置 |
 | 2 | CPU / 内存基线 | 识别延迟已降约 **4×**；CPU 绝对数字待真机复测（见 §5 M6） |
-| 3 | ONNX Run 仍占 ~85% | 只有 int8 **静态**量化（需校准集）或 GPU 才能再降；GPU 代价 **+2.4GB** |
+| 3 | 推理耗时已到平台期 | CPU int8 静态量化**已试并否决**（精度崩 + 更慢，§3.1/§5）；现走 DML + 固定宽 + 全批（~70ms），进一步只能换更强 GPU。CUDA 代价 **+2.4GB**，性价比低 |
 | 4 | 翻页过渡帧多建第 2 页槽位（13→17，~6s 自愈） | 可加「页分类连续 2 帧一致才建槽位」，会增加延迟 |
 | 5 | 槽位模型依赖**列表顺序稳定** | 列表整体重排时某槽位会短暂显示错值；1Hz 整行重读 + 短外推使影响有界 |
 | 6 | 多显示器 / 非 100% DPI / 窗口拖动下的自动跟随 | 未验证 |
-| 7 | 项目**不是 git 仓库** | 建议 `git init` 建立基线 |
+| 7 | 打包收尾 | 自定义图标、代码签名（SmartScreen）；`-ReadyToRun` 冷启动优化 |
 

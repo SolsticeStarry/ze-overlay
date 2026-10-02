@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>ZeOverlay.Gui</RootNamespace>
+    <AssemblyName>ZeOverlay.Gui</AssemblyName>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ZeOverlay.Shared\ZeOverlay.Shared.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Infrastructure\ZeOverlay.Infrastructure.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Win32\ZeOverlay.Win32.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.ScreenCapture\ZeOverlay.Stage.ScreenCapture.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.RowAnalysis\ZeOverlay.Stage.RowAnalysis.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.GlyphSegmentation\ZeOverlay.Stage.GlyphSegmentation.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Recognition\ZeOverlay.Stage.Recognition.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Parsing\ZeOverlay.Stage.Parsing.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Tracking\ZeOverlay.Stage.Tracking.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Matching\ZeOverlay.Stage.Matching.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Presentation\ZeOverlay.Stage.Presentation.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AI.DirectML" Version="1.15.4" GeneratePathProperty="true" ExcludeAssets="all" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(PkgMicrosoft_AI_DirectML)\bin\x64-win\DirectML.dll" Link="DirectML.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\models\**\*" Link="models\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

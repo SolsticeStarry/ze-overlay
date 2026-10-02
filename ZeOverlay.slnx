@@ -1,10 +1,20 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/src/">
-    <Project Path="src/ZeOverlay.App/ZeOverlay.App.csproj" />
-    <Project Path="src/ZeOverlay.Core/ZeOverlay.Core.csproj" />
-    <Project Path="src/ZeOverlay.Platform.Windows/ZeOverlay.Platform.Windows.csproj" />
+    <Project Path="src/ZeOverlay.Shared/ZeOverlay.Shared.csproj" />
+    <Project Path="src/ZeOverlay.Infrastructure/ZeOverlay.Infrastructure.csproj" />
+    <Project Path="src/ZeOverlay.Win32/ZeOverlay.Win32.csproj" />
+    <Project Path="src/ZeOverlay.Stage.ScreenCapture/ZeOverlay.Stage.ScreenCapture.csproj" />
+    <Project Path="src/ZeOverlay.Stage.RowAnalysis/ZeOverlay.Stage.RowAnalysis.csproj" />
+    <Project Path="src/ZeOverlay.Stage.GlyphSegmentation/ZeOverlay.Stage.GlyphSegmentation.csproj" />
+    <Project Path="src/ZeOverlay.Stage.Recognition/ZeOverlay.Stage.Recognition.csproj" />
+    <Project Path="src/ZeOverlay.Stage.Parsing/ZeOverlay.Stage.Parsing.csproj" />
+    <Project Path="src/ZeOverlay.Stage.Tracking/ZeOverlay.Stage.Tracking.csproj" />
+    <Project Path="src/ZeOverlay.Stage.Matching/ZeOverlay.Stage.Matching.csproj" />
+    <Project Path="src/ZeOverlay.Stage.Presentation/ZeOverlay.Stage.Presentation.csproj" />
+    <Project Path="src/ZeOverlay.Gui/ZeOverlay.Gui.csproj" />
+    <Project Path="src/ZeOverlay.Cli/ZeOverlay.Cli.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/ZeOverlay.Core.Tests/ZeOverlay.Core.Tests.csproj" />
+    <Project Path="tests/ZeOverlay.Tests/ZeOverlay.Tests.csproj" />
   </Folder>
 </Solution>

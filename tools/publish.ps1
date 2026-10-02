@@ -1,0 +1,138 @@
+﻿<#
+.SYNOPSIS
+    构建 ZeOverlay 的自包含（self-contained）单文件夹发布包。
+
+.DESCRIPTION
+    产物布局（默认）：
+        publish/ZeOverlay/                 自包含运行目录（exe + 运行库 + models/）
+        publish/ZeOverlay-cli/             可选，-IncludeCli 时生成
+        publish/ZeOverlay-<rid>.zip        可选，-Zip 时生成
+
+    关键点：
+    * self-contained + 指定 RID：目标机无需安装 .NET 运行时。
+    * 单文件夹（PublishSingleFile=false）：config.json / watchlist.json / shots /
+      logs 仍固定在 exe 旁可写（见 docs/DESIGN.md §3），避免解压到 %TEMP% 后
+      运行时数据到处乱跑。
+    * 运行时不需要检测（det）模型：发布副本里剔除，省 2.3 MB。
+    * 调试符号（*.pdb）不进发布包。
+
+.USAGE
+    powershell -ExecutionPolicy Bypass -File tools\publish.ps1
+    powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip -IncludeCli
+#>
+[CmdletBinding()]
+param(
+    [ValidateSet('Release', 'Debug')]
+    [string]$Configuration = 'Release',
+
+    [string]$RuntimeIdentifier = 'win-x64',
+
+    # 同时发布离线工具 ZeOverlay.Cli（默认不发布，终端用户不需要）。
+    [switch]$IncludeCli,
+
+    # 生成可分发的 zip。
+    [switch]$Zip,
+
+    # 预编译（ReadyToRun）：启动略快，体积更大。默认关闭。
+    [switch]$ReadyToRun,
+
+    # NuGet 走本地代理（本机直连不稳时用）。
+    [string]$Proxy
+)
+
+$ErrorActionPreference = 'Stop'
+
+if ($Proxy) {
+    $env:HTTP_PROXY = $Proxy
+    $env:HTTPS_PROXY = $Proxy
+    Write-Host "已设置代理：$Proxy"
+}
+
+$root = Split-Path -Parent $PSScriptRoot
+$guiProj = Join-Path $root 'src\ZeOverlay.Gui\ZeOverlay.Gui.csproj'
+$cliProj = Join-Path $root 'src\ZeOverlay.Cli\ZeOverlay.Cli.csproj'
+$outRoot = Join-Path $root 'publish'
+$guiOut = Join-Path $outRoot 'ZeOverlay'
+
+# 发布到此仓库内目录；先清掉旧产物，避免残留已删除的文件。
+if (Test-Path $outRoot) {
+    Remove-Item $outRoot -Recurse -Force
+}
+New-Item -ItemType Directory -Path $outRoot -Force | Out-Null
+
+$common = @(
+    '-c', $Configuration,
+    '-r', $RuntimeIdentifier,
+    '--self-contained', 'true',
+    '-p:PublishSingleFile=false',
+    '-p:PublishTrimmed=false',
+    '-p:DebugType=none',
+    '-p:DebugSymbols=false',
+    '-p:GenerateDocumentationFile=false',
+    '-p:ErrorOnDuplicatePublishOutputFiles=false'
+)
+if ($ReadyToRun) { $common += '-p:PublishReadyToRun=true' }
+
+function Publish-Project {
+    param([string]$Project, [string]$Output)
+
+    Write-Host ""
+    Write-Host "=== 发布 $([IO.Path]::GetFileNameWithoutExtension($Project)) -> $Output ===" -ForegroundColor Cyan
+    & dotnet publish $Project @common -o $Output
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet publish 失败：$Project（退出码 $LASTEXITCODE）"
+    }
+
+    # 精简：运行时不需要 det 模型；调试符号不进发布包。
+    $det = Join-Path $Output 'models\ch_PP-OCRv3_det_infer.onnx'
+    if (Test-Path $det) {
+        Remove-Item $det -Force
+        Write-Host "  已剔除运行时无用的检测模型：ch_PP-OCRv3_det_infer.onnx（-2.3 MB）"
+    }
+    Get-ChildItem $Output -Recurse -Filter *.pdb -ErrorAction SilentlyContinue | Remove-Item -Force
+}
+
+Publish-Project -Project $guiProj -Output $guiOut
+
+# 便携启动器（双击即用，无控制台窗口）。
+$launcher = Join-Path $guiOut '启动 ZeOverlay.bat'
+@'
+@echo off
+rem 便携启动：切到本目录，避免工作目录影响。真正的数据目录始终是 exe 所在目录。
+cd /d "%~dp0"
+start "" "ZeOverlay.Gui.exe"
+'@ | Set-Content -Path $launcher -Encoding OEM
+
+# 自包含安装器：把 install.ps1 与一个双击入口一起放进发布包。
+$installer = Join-Path $root 'tools\install.ps1'
+if (Test-Path $installer) {
+    Copy-Item $installer (Join-Path $guiOut 'install.ps1') -Force
+    $installBat = Join-Path $guiOut '安装到本机.bat'
+    @'
+@echo off
+rem 双击运行：把本目录的程序安装到 %LOCALAPPDATA%\ZeOverlay 并创建快捷方式。
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
+pause
+'@ | Set-Content -Path $installBat -Encoding OEM
+}
+
+if ($IncludeCli) {
+    $cliOut = Join-Path $outRoot 'ZeOverlay-cli'
+    Publish-Project -Project $cliProj -Output $cliOut
+}
+
+# 统计与可选打包。
+$guiFiles = Get-ChildItem $guiOut -Recurse -File
+$guiMb = [math]::Round(($guiFiles | Measure-Object Length -Sum).Sum / 1MB, 1)
+Write-Host ""
+Write-Host "=== 完成 ===" -ForegroundColor Green
+Write-Host ("GUI  ：{0}  （{1} 个文件，{2} MB）" -f $guiOut, $guiFiles.Count, $guiMb)
+
+if ($Zip) {
+    $zipPath = Join-Path $outRoot ("ZeOverlay-{0}.zip" -f $RuntimeIdentifier)
+    if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
+    Write-Host "打包中：$zipPath ..."
+    Compress-Archive -Path (Join-Path $guiOut '*') -DestinationPath $zipPath -CompressionLevel Optimal
+    $zipMb = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
+    Write-Host ("ZIP  ：{0}  （{1} MB）" -f $zipPath, $zipMb)
+}

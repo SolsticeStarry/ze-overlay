@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>ZeOverlay.Infrastructure</RootNamespace>
+    <AssemblyName>ZeOverlay.Infrastructure</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ZeOverlay.Shared\ZeOverlay.Shared.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.RowAnalysis\ZeOverlay.Stage.RowAnalysis.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.GlyphSegmentation\ZeOverlay.Stage.GlyphSegmentation.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Recognition\ZeOverlay.Stage.Recognition.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Parsing\ZeOverlay.Stage.Parsing.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Tracking\ZeOverlay.Stage.Tracking.csproj" />
+    <ProjectReference Include="..\ZeOverlay.Stage.Matching\ZeOverlay.Stage.Matching.csproj" />
+  </ItemGroup>
+</Project>
