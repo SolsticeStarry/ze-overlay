@@ -78,8 +78,9 @@ public partial class OverlayWindow : Window
             return;
         }
 
-        Brush live = Parse(config.LiveColor);
-        Brush extrapolated = Parse(config.ExtrapolatedColor);
+        // 颜色统一：正文不再按“实时 / 外推”换色；外推只用最左侧的 △ 标记区分。
+        Brush body = Parse(config.LiveColor);
+        Brush marker = Parse(config.ExtrapolatedColor);
 
         foreach (TrackerEntryView entry in entries)
         {
@@ -94,13 +95,31 @@ public partial class OverlayWindow : Window
                 ? $"{remaining}/{total}"
                 : string.Empty;
 
-            // 来源区分：实时用正常色，外推用另一种颜色（PLAN 第 8.1 节）。
             var block = new TextBlock
             {
                 FontSize = config.FontSize,
-                Foreground = entry.Source == EntrySource.Live ? live : extrapolated,
+                Foreground = body,
                 Margin = new Thickness(0, 1, 0, 1),
             };
+
+            // 最左：未扫描到（本地外推）的标记 △，比原来的尾缀 ~ 更醒目。
+            if (config.ShowSourceMark && entry.Source != EntrySource.Live)
+            {
+                block.Inlines.Add(new System.Windows.Documents.Run("△ ")
+                {
+                    Foreground = marker,
+                    FontWeight = FontWeights.Bold,
+                });
+            }
+
+            if (config.ShowPageSlot)
+            {
+                block.Inlines.Add(new System.Windows.Documents.Run($"#{(int)entry.Page}-{entry.Slot:00}  ")
+                {
+                    Foreground = new SolidColorBrush(Color.FromRgb(113, 113, 122)),
+                    FontSize = config.FontSize * 0.85,
+                });
+            }
 
             block.Inlines.Add(new System.Windows.Documents.Run(entry.ArtifactName));
             block.Inlines.Add(new System.Windows.Documents.Run(" " + status)
@@ -116,25 +135,6 @@ public partial class OverlayWindow : Window
                 {
                     Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
                 });
-            }
-
-            if (config.ShowSourceMark && entry.Source != EntrySource.Live)
-            {
-                block.Inlines.Add(new System.Windows.Documents.Run("  ~")
-                {
-                    Foreground = extrapolated,
-                    FontSize = config.FontSize * 0.85,
-                });
-            }
-
-            if (config.ShowPageSlot)
-            {
-                var prefix = new System.Windows.Documents.Run($"#{(int)entry.Page}-{entry.Slot:00}  ")
-                {
-                    Foreground = new SolidColorBrush(Color.FromRgb(113, 113, 122)),
-                    FontSize = config.FontSize * 0.85,
-                };
-                block.Inlines.InsertBefore(block.Inlines.FirstInline, prefix);
             }
 
             Rows.Children.Add(block);
