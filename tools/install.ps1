@@ -35,12 +35,23 @@ param(
     [switch]$Launch,
 
     # 卸载：删除快捷方式与安装目录。
-    [switch]$Uninstall
+    [switch]$Uninstall,
+
+    # 仅弹出「选择安装位置」对话框并把所选路径打印到标准输出（供自解压安装器调用）。
+    [switch]$PickFolder
 )
 
 $ErrorActionPreference = 'Stop'
 $exeName = 'ZeOverlay.Gui.exe'
 $appName = 'ZeOverlay'
+
+# 写 .bat：无 BOM + CRLF（PS 5.1 的 -Encoding OEM 会写 BOM，cmd 会解析错乱）。
+function Write-OemFile {
+    param([string]$Path, [string]$Text)
+
+    $normalized = ($Text -replace "`r`n", "`n") -replace "`n", "`r`n"
+    [IO.File]::WriteAllText($Path, $normalized, [System.Text.Encoding]::GetEncoding(936))
+}
 
 function Get-ShortcutPaths {
     $paths = @()
@@ -61,6 +72,20 @@ function Remove-Shortcuts {
             Write-Host "已删除快捷方式：$lnk"
         }
     }
+}
+
+# ---------- 仅选择安装位置 ----------
+if ($PickFolder) {
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description = '选择 ZeOverlay 的安装位置（可点「新建文件夹」）'
+    $dialog.ShowNewFolderButton = $true
+    $dialog.SelectedPath = Join-Path $env:LOCALAPPDATA 'ZeOverlay'
+    if ($dialog.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
+        exit 1
+    }
+    Write-Output $dialog.SelectedPath
+    exit 0
 }
 
 # ---------- 卸载 ----------
@@ -140,11 +165,12 @@ foreach ($lnk in (Get-ShortcutPaths)) {
 
 # ---------- 写入卸载入口 ----------
 $uninstallBat = Join-Path $InstallDir '卸载.bat'
-@"
+$uninstallText = @"
 @echo off
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1" -Uninstall
 pause
-"@ | Set-Content -Path $uninstallBat -Encoding OEM
+"@
+Write-OemFile -Path $uninstallBat -Text $uninstallText
 
 Write-Host ""
 Write-Host "安装完成：$exe" -ForegroundColor Green

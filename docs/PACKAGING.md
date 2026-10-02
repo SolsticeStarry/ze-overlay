@@ -79,6 +79,39 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall
 | **DirectML 在单文件夹下加载** | ✅ 日志 `PP-OCRv3-rec(6624 类)+DML`，无缺 DLL 崩溃 |
 | 安装/卸载可逆 | ✅ 复制、桌面/开始菜单快捷方式、卸载均验证通过 |
 
+## 单文件安装程序（.exe，给最终用户）
+
+把发布目录打成**一个自解压 `.exe`**，双击即可安装；用 Windows 自带的 IExpress，目标机无需预装任何东西。
+
+```powershell
+# 先发布，再打包安装器（默认读 publish\ZeOverlay，输出 publish\ZeOverlay-Setup.exe）
+powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip
+powershell -ExecutionPolicy Bypass -File tools\make-installer.ps1
+
+# 指定路径 / 顺带签名
+powershell -ExecutionPolicy Bypass -File tools\make-installer.ps1 -Out publish\ZeOverlay-Setup.exe -SignPfx cert.pfx -SignPfxPassword ***
+```
+
+安装器运行流程：
+
+1. 自解压到 `%TEMP%\IXP000.TMP`（内含 `payload.zip` / `install.cmd` / `install.ps1`）；
+2. 弹出**「选择安装位置」文件夹对话框**（可点「新建文件夹」，默认 `%LOCALAPPDATA%\ZeOverlay`）；
+3. 在该目录**展开全部文件**（若目录不存在会自动新建）；
+4. 创建桌面 / 开始菜单快捷方式，并写入 `卸载.bat`。
+
+| 项 | 值 |
+|---|---|
+| 安装器 | `publish\ZeOverlay-Setup.exe`，**约 90.7 MB**（内嵌 92 MB payload.zip） |
+| 展开结果 | 283 文件 / 215 MB（含 `DirectML.dll`、`models/`） |
+| 卸载 | 安装目录内 `卸载.bat`，或 `install.ps1 -Uninstall` |
+
+**无人值守测试**：设置环境变量后运行可跳过对话框（供 CI 使用）——
+
+```powershell
+$env:ZE_INSTALL_DIR = "$env:TEMP\ze-test"; $env:ZE_QUIET = '1'
+& publish\ZeOverlay-Setup.exe
+```
+
 ## 已知限制 / 待办
 
 - **代码签名**：发布脚本支持 `-SignPfx` / `-SignThumbprint`（需 Windows SDK 的 `signtool.exe`）；

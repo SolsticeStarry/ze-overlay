@@ -49,6 +49,15 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# 写 .bat/.cmd：必须**无 BOM + CRLF**，否则 cmd 会把 BOM 当成命令而解析错乱。
+# 注意：PowerShell 5.1 的 `Set-Content -Encoding OEM` 会写 UTF-8 BOM，不能用。
+function Write-OemFile {
+    param([string]$Path, [string]$Text)
+
+    $normalized = ($Text -replace "`r`n", "`n") -replace "`n", "`r`n"
+    [IO.File]::WriteAllText($Path, $normalized, [System.Text.Encoding]::GetEncoding(936))
+}
+
 if ($Proxy) {
     $env:HTTP_PROXY = $Proxy
     $env:HTTPS_PROXY = $Proxy
@@ -133,24 +142,26 @@ Publish-Project -Project $guiProj -Output $guiOut
 
 # 便携启动器（双击即用，无控制台窗口）。
 $launcher = Join-Path $guiOut '启动 ZeOverlay.bat'
-@'
+$launcherText = @'
 @echo off
 rem 便携启动：切到本目录，避免工作目录影响。真正的数据目录始终是 exe 所在目录。
 cd /d "%~dp0"
 start "" "ZeOverlay.Gui.exe"
-'@ | Set-Content -Path $launcher -Encoding OEM
+'@
+Write-OemFile -Path $launcher -Text $launcherText
 
 # 自包含安装器：把 install.ps1 与一个双击入口一起放进发布包。
 $installer = Join-Path $root 'tools\install.ps1'
 if (Test-Path $installer) {
     Copy-Item $installer (Join-Path $guiOut 'install.ps1') -Force
     $installBat = Join-Path $guiOut '安装到本机.bat'
-    @'
+    $installBatText = @'
 @echo off
 rem 双击运行：把本目录的程序安装到 %LOCALAPPDATA%\ZeOverlay 并创建快捷方式。
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
 pause
-'@ | Set-Content -Path $installBat -Encoding OEM
+'@
+    Write-OemFile -Path $installBat -Text $installBatText
 }
 
 if ($IncludeCli) {
