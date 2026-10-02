@@ -28,8 +28,7 @@ public sealed class AppConfig
 public sealed class TrackingConfig
 {
     /// <summary>
-    /// 某行「所在页可见」时，超过这么多秒没扫到数据就自动消失。默认 5s（0.5–60）。
-    /// 翻到别的页不会因此判死。
+    /// 某行超过这么多秒没扫到数据就自动消失。默认 5s（0.5–60）。无条件：翻页/列表消失也算。
     /// </summary>
     public double RowDisappearSeconds { get; set; } = 5.0;
 }

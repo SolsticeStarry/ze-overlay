@@ -104,21 +104,27 @@ public class ArtifactTrackerTests
     }
 
     [Fact]
-    public void PageNotVisible_DoesNotCountAsMiss()
+    public void PageNotVisible_AlsoDisappearsAfterTimeout()
     {
         var tracker = new Tracker();
         tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 60)], T0);
 
-        // 翻到第 2 页（1 行）并停留 10 秒 —— 第 1 页的槽位不能被判死
-        for (int i = 1; i <= 20; i++)
+        // 翻到第 2 页，停留 3 秒（未超时）：第 1 页槽位仍在（外推）
+        for (int i = 1; i <= 6; i++)
         {
             tracker.Observe(1, [Row(0, "别的神器")], T0.AddMilliseconds(500 * i));
         }
 
-        IReadOnlyList<TrackerEntryView> view = tracker.Snapshot(T0.AddSeconds(10));
-        TrackerEntryView firstPage = view.Single(e => e.Page == VisiblePage.Page1);
-        Assert.Equal(0, firstPage.MissedSessions);
-        Assert.Equal(EntrySource.Extrapolated, firstPage.Source);
+        TrackerEntryView before = tracker.Snapshot(T0.AddSeconds(3)).Single(e => e.Page == VisiblePage.Page1);
+        Assert.Equal(EntrySource.Extrapolated, before.Source);
+
+        // 停留 7 秒（超过 5s 无条件超时）：第 1 页槽位消失
+        for (int i = 7; i <= 14; i++)
+        {
+            tracker.Observe(1, [Row(0, "别的神器")], T0.AddMilliseconds(500 * i));
+        }
+
+        Assert.DoesNotContain(tracker.Snapshot(T0.AddSeconds(7)), e => e.Page == VisiblePage.Page1);
     }
 
     [Fact]
@@ -141,7 +147,7 @@ public class ArtifactTrackerTests
         tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 3)], T0);
         tracker.Observe(1, [Row(0, "别的神器")], T0.AddSeconds(1));
 
-        TrackerEntryView view = tracker.Snapshot(T0.AddSeconds(5)).Single(e => e.Page == VisiblePage.Page1);
+        TrackerEntryView view = tracker.Snapshot(T0.AddSeconds(4)).Single(e => e.Page == VisiblePage.Page1);
 
         Assert.Equal(0, view.CooldownSeconds);
         Assert.Equal(ArtifactState.Ready, view.State);
@@ -149,19 +155,27 @@ public class ArtifactTrackerTests
     }
 
     [Fact]
-    public void ListDisappears_KeepsExtrapolating()
+    public void ListDisappears_AlsoDisappearsAfterTimeout()
     {
         var tracker = new Tracker();
-        tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 5)], T0);
+        tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 30)], T0);
 
-        for (int i = 1; i <= 10; i++)
+        // 列表消失、停留 3 秒（未超时）：仍在外推
+        for (int i = 1; i <= 6; i++)
         {
             tracker.Observe(0, [], T0.AddMilliseconds(500 * i));
         }
 
-        TrackerEntryView view = tracker.Snapshot(T0.AddSeconds(5))[0];
-        Assert.Equal(0, view.MissedSessions);
+        TrackerEntryView view = tracker.Snapshot(T0.AddSeconds(3))[0];
         Assert.Equal(EntrySource.Extrapolated, view.Source);
+
+        // 停留 7 秒（超过 5s）：消失
+        for (int i = 7; i <= 14; i++)
+        {
+            tracker.Observe(0, [], T0.AddMilliseconds(500 * i));
+        }
+
+        Assert.Empty(tracker.Snapshot(T0.AddSeconds(7)));
     }
 
     [Fact]
@@ -171,11 +185,11 @@ public class ArtifactTrackerTests
         tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 30)], T0);
         tracker.Observe(1, [Row(0, "别的神器")], T0.AddSeconds(1));
 
-        TrackerEntryView before = tracker.Snapshot(T0.AddSeconds(6)).Single(e => e.Page == VisiblePage.Page1);
-        Assert.Equal(24, before.CooldownSeconds);
+        TrackerEntryView before = tracker.Snapshot(T0.AddSeconds(4)).Single(e => e.Page == VisiblePage.Page1);
+        Assert.Equal(26, before.CooldownSeconds);
 
-        tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 9)], T0.AddSeconds(7));
-        TrackerEntryView after = tracker.Snapshot(T0.AddSeconds(7)).Single(e => e.Page == VisiblePage.Page1);
+        tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 9)], T0.AddSeconds(5));
+        TrackerEntryView after = tracker.Snapshot(T0.AddSeconds(5)).Single(e => e.Page == VisiblePage.Page1);
 
         Assert.Equal(9, after.CooldownSeconds);
         Assert.Equal(EntrySource.Live, after.Source);

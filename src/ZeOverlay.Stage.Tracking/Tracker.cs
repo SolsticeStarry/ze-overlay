@@ -11,8 +11,9 @@ namespace ZeOverlay.Stage.Tracking;
 /// 3. 列表**顶部锚定、行距固定**，行槽位本身就是稳定身份 —— 行号相同就是同一行，
 ///    这一行的读数只更新这一行。
 ///
-/// 消亡规则：某槽位**所在页正可见**、却超过 <see cref="TrackerOptions.DisappearAfterSeconds"/>
-/// （默认 5s）没扫到数据，就自动移除；翻到别的页 / 列表消失不会因此判死（继续外推）。
+/// 消亡规则：某槽位超过 <see cref="TrackerOptions.DisappearAfterSeconds"/>（默认 5s）
+/// 没扫到数据就**自动移除**——**无条件**，不分页、不看是否可见。
+/// 也就是说翻到别的页 / 列表消失后，旧条目最多再保留 DisappearAfterSeconds 秒即消失。
 /// </summary>
 public sealed class Tracker
 {
@@ -178,10 +179,8 @@ public sealed class Tracker
 
         foreach (Entry entry in _entries.Values.ToList())
         {
-            // 只有「该槽位所在页正可见」时，超时才判它消失；翻到别的页则继续外推。
-            bool pageVisible = page != VisiblePage.Unknown && entry.Page == page;
-            bool timedOut = pageVisible
-                && (now - entry.LastSeen).TotalSeconds > _options.DisappearAfterSeconds;
+            // 无条件超时：不分页、不看是否可见——超过时限没扫到就移除。
+            bool timedOut = (now - entry.LastSeen).TotalSeconds > _options.DisappearAfterSeconds;
             bool tooOld = (now - entry.LastSeen).TotalSeconds > _options.MaxAgeSeconds;
 
             if (timedOut || tooOld)
