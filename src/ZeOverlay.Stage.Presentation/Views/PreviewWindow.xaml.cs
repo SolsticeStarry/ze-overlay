@@ -4,12 +4,12 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 
 using ZeOverlay.Shared;
+using ZeOverlay.Infrastructure;
 
 namespace ZeOverlay.Stage.Presentation;
 
 /// <summary>
-/// M0 的验证界面：把抓到的列表区域原样可视化，并显示采集耗时 /
-/// ROI / DPI 等「必须真机实测」的信息（PLAN 第 11 节基准在第 15 节确认前不作结论）。
+/// 主界面：左=常驻设置面板，右=预览。把设置从弹窗改为内嵌，去掉「设置」按钮。
 /// </summary>
 public partial class PreviewWindow : Window
 {
@@ -18,13 +18,12 @@ public partial class PreviewWindow : Window
     private Action? _onOpenShots;
     private Action? _onOpenLogs;
     private Action? _onQuit;
-    private Action? _onSettings;
 
     public PreviewWindow()
     {
         InitializeComponent();
 
-        // 默认停靠屏幕右侧工作区，给左侧的设置窗口留位。
+        // 默认停靠屏幕右侧工作区。
         Rect workArea = SystemParameters.WorkArea;
         Left = Math.Max(workArea.Left, workArea.Right - Width - 16);
         Top = workArea.Top + 16;
@@ -34,21 +33,36 @@ public partial class PreviewWindow : Window
 
     public event EventHandler? PauseChanged;
 
+    /// <summary>内嵌的设置面板（宿主读取其 Configuration / Watchlist）。</summary>
+    public SettingsPanel Settings => SettingsPanelControl;
+
+    /// <summary>用户在设置面板点「应用设置」后触发。</summary>
+    public event EventHandler? SettingsApplied;
+
     public void BindActions(
         Action onSelectRoi,
         Action onSnapshot,
         Action onOpenShots,
         Action onOpenLogs,
-        Action onQuit,
-        Action onSettings)
+        Action onQuit)
     {
         _onSelectRoi = onSelectRoi;
         _onSnapshot = onSnapshot;
         _onOpenShots = onOpenShots;
         _onOpenLogs = onOpenLogs;
         _onQuit = onQuit;
-        _onSettings = onSettings;
     }
+
+    /// <summary>用当前配置初始化左侧设置面板。</summary>
+    public void InitializeSettings(AppConfig config, WatchlistConfig watchlist, Func<IReadOnlyList<string>> recentNames)
+    {
+        SettingsPanelControl.LoadFrom(config, watchlist, recentNames);
+        SettingsPanelControl.Applied += (_, _) => SettingsApplied?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>刷新设置面板里的「最近识别」列表。</summary>
+    public void RefreshRecentNames(Func<IReadOnlyList<string>> recentNames)
+        => SettingsPanelControl.RefreshRecentNames(recentNames);
 
     /// <summary>
     /// 显示**实际注册成功**的热键。
@@ -94,8 +108,6 @@ public partial class PreviewWindow : Window
     private void OnOpenLogsClick(object sender, RoutedEventArgs e) => _onOpenLogs?.Invoke();
 
     private void OnQuitClick(object sender, RoutedEventArgs e) => _onQuit?.Invoke();
-
-    private void OnSettingsClick(object sender, RoutedEventArgs e) => _onSettings?.Invoke();
 
     private void OnPauseClick(object sender, RoutedEventArgs e)
     {

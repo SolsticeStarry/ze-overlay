@@ -10,20 +10,34 @@ using ZeOverlay.Infrastructure;
 namespace ZeOverlay.Stage.Presentation;
 
 /// <summary>
-/// 设置窗口（M5）：关注名单 / 显示与频率 / 热键。
-/// 只负责收集与校验，不直接落盘或注册热键——由 Host 在对话框确认后统一应用。
+/// 设置面板（常驻预览窗口左侧，非弹窗）：关注名单 / 显示与频率 / 热键。
+/// 只负责收集与校验，点「应用设置」后由宿主统一落盘并生效。
 /// </summary>
-public partial class SettingsWindow : Window
+public partial class SettingsPanel : UserControl
 {
-    private List<string> _names;
-    private readonly IReadOnlyList<string> _recentNames;
+    private List<string> _names = [];
+    private IReadOnlyList<string> _recentNames = [];
 
-    public SettingsWindow(AppConfig config, WatchlistConfig watchlist, Func<IReadOnlyList<string>> recentNames)
+    public SettingsPanel()
     {
         InitializeComponent();
+    }
 
+    /// <summary>最近一次「应用」后的配置（宿主读取后落盘并生效）。</summary>
+    public AppConfig Configuration { get; private set; } = new();
+
+    /// <summary>最近一次「应用」后的关注名单。</summary>
+    public WatchlistConfig Watchlist { get; private set; } = new();
+
+    /// <summary>用户点击「应用设置」且校验通过后触发。</summary>
+    public event EventHandler? Applied;
+
+    /// <summary>用当前配置初始化界面。</summary>
+    public void LoadFrom(AppConfig config, WatchlistConfig watchlist, Func<IReadOnlyList<string>> recentNames)
+    {
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(watchlist);
+        ArgumentNullException.ThrowIfNull(recentNames);
 
         Configuration = CloneConfig(config);
         Watchlist = CloneWatchlist(watchlist);
@@ -33,22 +47,22 @@ public partial class SettingsWindow : Window
             .Distinct(StringComparer.Ordinal)
             .Take(WatchlistConfig.MaxNames)
             .ToList();
-        List<string> configuredOrder = Watchlist.SortOrder
-            .Where(_names.Contains)
-            .ToList();
+        List<string> configuredOrder = Watchlist.SortOrder.Where(_names.Contains).ToList();
         configuredOrder.AddRange(_names.Where(name => !configuredOrder.Contains(name, StringComparer.Ordinal)));
         _names = configuredOrder;
 
         _recentNames = recentNames();
         RefreshLists();
         LoadIntoControls();
+        ApplyStatus.Text = string.Empty;
     }
 
-    /// <summary>确认后的 AppConfig（含显示/频率/热键）。</summary>
-    public AppConfig Configuration { get; private set; }
-
-    /// <summary>确认后的关注名单。</summary>
-    public WatchlistConfig Watchlist { get; private set; }
+    /// <summary>可随时刷新「最近识别」列表。</summary>
+    public void RefreshRecentNames(Func<IReadOnlyList<string>> recentNames)
+    {
+        _recentNames = recentNames();
+        RefreshLists();
+    }
 
     private void LoadIntoControls()
     {
@@ -165,7 +179,7 @@ public partial class SettingsWindow : Window
         if (sender is not TextBox box) return;
 
         Key key = e.Key == Key.System ? e.SystemKey : e.Key;
-        if (IsModifierKey(key)) return; // 只按住修饰键时先不动
+        if (IsModifierKey(key)) return;
 
         var parts = new List<string>();
         ModifierKeys modifiers = Keyboard.Modifiers;
@@ -176,7 +190,6 @@ public partial class SettingsWindow : Window
 
         if (parts.Count == 0)
         {
-            // 无修饰键的单键容易误触，明确拒绝。
             box.Text = string.Empty;
             e.Handled = true;
             MessageBox.Show("热键至少需要一个修饰键（Ctrl / Alt / Shift / Win）。", "ZeOverlay", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -202,7 +215,7 @@ public partial class SettingsWindow : Window
         Key.LeftShift or Key.RightShift or
         Key.LWin or Key.RWin or Key.System;
 
-    private void OnSaveClick(object sender, RoutedEventArgs e)
+    private void OnApplyClick(object sender, RoutedEventArgs e)
     {
         if (!double.TryParse(ThresholdTextBox.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double threshold)
             || threshold is < 0.5 or > 1.0)
@@ -304,7 +317,8 @@ public partial class SettingsWindow : Window
             MatchThreshold = threshold,
         };
 
-        DialogResult = true;
+        ApplyStatus.Text = $"已应用 {DateTime.Now:HH:mm:ss}";
+        Applied?.Invoke(this, EventArgs.Empty);
     }
 
     private static void Warn(string field, string message, Control focus)
@@ -341,7 +355,6 @@ public partial class SettingsWindow : Window
 
     private static AppConfig CloneConfig(AppConfig source)
     {
-        // 深拷贝一份，取消对话框时不污染运行中的配置。
         return new AppConfig
         {
             Version = source.Version,
