@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -78,11 +79,18 @@ public partial class OverlayWindow : Window
             return;
         }
 
-        Brush live = Parse(config.LiveColor);
-        Brush extrapolated = Parse(config.ExtrapolatedColor);
+        // 颜色统一：正文不再按“实时 / 外推”换色；外推只用最左侧的 ▲ 标记区分。
+        Brush body = Parse(config.LiveColor);
+        Brush marker = Parse(config.ExtrapolatedColor);
+        double halfSpacing = config.RowSpacing / 2.0;
 
-        foreach (TrackerEntryView entry in entries)
+        // 按神器名分别计数：同类从 1 递增（滋水枪1、滋水枪2、袋装火盐1…）。
+        var typeCounters = new Dictionary<string, int>(StringComparer.Ordinal);
+
+        for (int i = 0; i < entries.Count; i++)
         {
+            TrackerEntryView entry = entries[i];
+
             string status = entry.State switch
             {
                 ArtifactState.Ready => "[R]",
@@ -94,15 +102,50 @@ public partial class OverlayWindow : Window
                 ? $"{remaining}/{total}"
                 : string.Empty;
 
-            // 来源区分：实时用正常色，外推用另一种颜色（PLAN 第 8.1 节）。
             var block = new TextBlock
             {
                 FontSize = config.FontSize,
-                Foreground = entry.Source == EntrySource.Live ? live : extrapolated,
-                Margin = new Thickness(0, 1, 0, 1),
+                Foreground = body,
+                Margin = new Thickness(0, halfSpacing, 0, halfSpacing),
+                // 固定行高：避免放大的 ▲ 把每行撑高；行间距统一由 RowSpacing 控制。
+                LineHeight = config.FontSize * 1.5,
+                LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
             };
 
+            // 最左：为未扫描到标记 ~ 预留固定宽度。
+            // 关键：实时行也用**同字形同字号**（只是透明），这样无论有没有 ~，正文起点都一致，不会左右跳动。
+            if (config.ShowSourceMark)
+            {
+                block.Inlines.Add(new System.Windows.Documents.Run("~ ")
+                {
+                    Foreground = entry.Source == EntrySource.Live ? Brushes.Transparent : marker,
+                    FontWeight = FontWeights.Bold,
+                    FontSize = config.FontSize * 1.5,
+                });
+            }
+
+            if (config.ShowPageSlot)
+            {
+                block.Inlines.Add(new System.Windows.Documents.Run($"#{(int)entry.Page}-{entry.Slot:00}  ")
+                {
+                    Foreground = new SolidColorBrush(Color.FromRgb(113, 113, 122)),
+                    FontSize = config.FontSize * 0.85,
+                });
+            }
+
             block.Inlines.Add(new System.Windows.Documents.Run(entry.ArtifactName));
+
+            // 标号：紧贴名称后、与名称同色；**按神器类型**分别编号（同类 1,2,3…）。
+            if (config.ShowRowNumber && !RowLabels.HasNumberLabel(entry.ArtifactName))
+            {
+                int n = typeCounters.TryGetValue(entry.ArtifactName, out int c) ? c + 1 : 1;
+                typeCounters[entry.ArtifactName] = n;
+                block.Inlines.Add(new System.Windows.Documents.Run(n.ToString(CultureInfo.InvariantCulture))
+                {
+                    Foreground = body,
+                });
+            }
+
             block.Inlines.Add(new System.Windows.Documents.Run(" " + status)
             {
                 Foreground = entry.State == ArtifactState.Cooling
@@ -118,26 +161,37 @@ public partial class OverlayWindow : Window
                 });
             }
 
-            if (config.ShowSourceMark && entry.Source != EntrySource.Live)
+            if (config.ShowPlayerName)
             {
-                block.Inlines.Add(new System.Windows.Documents.Run("  ~")
-                {
-                    Foreground = extrapolated,
-                    FontSize = config.FontSize * 0.85,
-                });
-            }
+                // 两列：左=玩家名（固定宽度、右对齐），右=正文（编号+名称+状态）。
+                // 固定宽度保证玩家名再长也不会推动右侧文字。
+                var grid = new Grid();
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Max(40, config.PlayerNameWidth)) });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            if (config.ShowPageSlot)
-            {
-                var prefix = new System.Windows.Documents.Run($"#{(int)entry.Page}-{entry.Slot:00}  ")
+                var player = new TextBlock
                 {
-                    Foreground = new SolidColorBrush(Color.FromRgb(113, 113, 122)),
+                    Text = entry.PlayerName ?? string.Empty,
                     FontSize = config.FontSize * 0.85,
+                    Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                    TextAlignment = TextAlignment.Right,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    TextWrapping = TextWrapping.NoWrap,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 8, 0),
                 };
-                block.Inlines.InsertBefore(block.Inlines.FirstInline, prefix);
-            }
+                Grid.SetColumn(player, 0);
+                Grid.SetColumn(block, 1);
 
-            Rows.Children.Add(block);
+                grid.Children.Add(player);
+                grid.Children.Add(block);
+                Rows.Children.Add(grid);
+            }
+            else
+            {
+                Rows.Children.Add(block);
+            }
         }
     }
 

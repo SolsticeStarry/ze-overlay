@@ -60,7 +60,11 @@ public partial class SettingsWindow : Window
         BackgroundOpacityBox.Text = overlay.BackgroundOpacity.ToString("0.##", CultureInfo.InvariantCulture);
         ShowUsesCheck.IsChecked = overlay.ShowUses;
         ShowPageSlotCheck.IsChecked = overlay.ShowPageSlot;
+        ShowPlayerNameCheck.IsChecked = overlay.ShowPlayerName;
+        PlayerNameWidthBox.Text = overlay.PlayerNameWidth.ToString("0.#", CultureInfo.InvariantCulture);
         ShowSourceMarkCheck.IsChecked = overlay.ShowSourceMark;
+        ShowRowNumberCheck.IsChecked = overlay.ShowRowNumber;
+        RowSpacingBox.Text = overlay.RowSpacing.ToString("0.#", CultureInfo.InvariantCulture);
         LiveColorBox.Text = overlay.LiveColor;
         ExtrapolatedColorBox.Text = overlay.ExtrapolatedColor;
 
@@ -221,6 +225,20 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        if (!double.TryParse(RowSpacingBox.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double rowSpacing)
+            || rowSpacing is < -20 or > 40)
+        {
+            Warn("行间距", "必须是 -20 到 40 之间的数字（像素）。", RowSpacingBox);
+            return;
+        }
+
+        if (!double.TryParse(PlayerNameWidthBox.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double playerWidth)
+            || playerWidth is < 40 or > 400)
+        {
+            Warn("玩家名列宽", "必须是 40 到 400 之间的数字（像素）。", PlayerNameWidthBox);
+            return;
+        }
+
         if (!int.TryParse(CaptureFpsBox.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int fps)
             || fps is < 1 or > 10)
         {
@@ -259,7 +277,11 @@ public partial class SettingsWindow : Window
         Configuration.Overlay.BackgroundOpacity = opacity;
         Configuration.Overlay.ShowUses = ShowUsesCheck.IsChecked == true;
         Configuration.Overlay.ShowPageSlot = ShowPageSlotCheck.IsChecked == true;
+        Configuration.Overlay.ShowPlayerName = ShowPlayerNameCheck.IsChecked == true;
+        Configuration.Overlay.PlayerNameWidth = playerWidth;
         Configuration.Overlay.ShowSourceMark = ShowSourceMarkCheck.IsChecked == true;
+        Configuration.Overlay.ShowRowNumber = ShowRowNumberCheck.IsChecked == true;
+        Configuration.Overlay.RowSpacing = rowSpacing;
         Configuration.Overlay.LiveColor = live;
         Configuration.Overlay.ExtrapolatedColor = extrapolated;
 
@@ -350,7 +372,11 @@ public partial class SettingsWindow : Window
                 LiveColor = source.Overlay.LiveColor,
                 SortMode = source.Overlay.SortMode,
                 ShowPageSlot = source.Overlay.ShowPageSlot,
+                ShowPlayerName = source.Overlay.ShowPlayerName,
+                PlayerNameWidth = source.Overlay.PlayerNameWidth,
                 ShowSourceMark = source.Overlay.ShowSourceMark,
+                ShowRowNumber = source.Overlay.ShowRowNumber,
+                RowSpacing = source.Overlay.RowSpacing,
                 BackgroundOpacity = source.Overlay.BackgroundOpacity,
             },
             Storage = source.Storage,

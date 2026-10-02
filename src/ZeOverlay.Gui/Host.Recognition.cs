@@ -208,7 +208,8 @@ public sealed partial class Host
             parsed.State,
             parsed.CooldownSeconds,
             parsed.UsesRemaining,
-            parsed.UsesTotal));
+            parsed.UsesTotal,
+            parsed.PlayerName));
     }
 
     /// <summary>按关注名单过滤；名单为空时全部显示（否则界面上什么都看不到，没法用）。</summary>

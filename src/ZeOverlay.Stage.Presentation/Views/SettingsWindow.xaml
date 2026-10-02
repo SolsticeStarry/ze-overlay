@@ -88,12 +88,26 @@
 
                         <CheckBox x:Name="ShowUsesCheck" Content="显示剩余次数 n/m" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
                         <CheckBox x:Name="ShowPageSlotCheck" Content="显示 #页-行 前缀" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
-                        <CheckBox x:Name="ShowSourceMarkCheck" Content="外推条目标记 ~" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
+                        <CheckBox x:Name="ShowPlayerNameCheck" Content="显示玩家名（最左固定列，不影响右侧排版）" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
+                        <CheckBox x:Name="ShowSourceMarkCheck" Content="未扫描到标记 ~（置于最左）" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
+                        <CheckBox x:Name="ShowRowNumberCheck" Content="无数字标号时按类编号（滋水枪1、滋水枪2…）" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="行间距：" Foreground="#FFE4E4E7" Width="120" VerticalAlignment="Center" />
+                            <TextBox x:Name="RowSpacingBox" Width="70" Height="26" />
+                            <TextBlock Text="px（-20–40；可为负以收紧）" Foreground="#FF71717A" VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="玩家名列宽：" Foreground="#FFE4E4E7" Width="120" VerticalAlignment="Center" />
+                            <TextBox x:Name="PlayerNameWidthBox" Width="70" Height="26" />
+                            <TextBlock Text="px（40–400）" Foreground="#FF71717A" VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
-                            <TextBlock Text="实时颜色：" Foreground="#FFE4E4E7" Width="120" VerticalAlignment="Center" />
+                            <TextBlock Text="文字颜色：" Foreground="#FFE4E4E7" Width="120" VerticalAlignment="Center" />
                             <TextBox x:Name="LiveColorBox" Width="120" Height="26" />
-                            <TextBlock Text="外推颜色：" Foreground="#FFE4E4E7" Width="80" VerticalAlignment="Center" Margin="16,0,0,0" />
+                            <TextBlock Text="未扫到 ~ 颜色：" Foreground="#FFE4E4E7" Width="110" VerticalAlignment="Center" Margin="16,0,0,0" />
                             <TextBox x:Name="ExtrapolatedColorBox" Width="120" Height="26" />
                         </StackPanel>
 

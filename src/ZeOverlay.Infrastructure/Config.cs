@@ -84,10 +84,11 @@ public sealed class OverlayConfig
 
     public bool ShowUses { get; set; } = true;
 
-    /// <summary>外推条目的显示颜色（实时条目用白字）。</summary>
-    public string ExtrapolatedColor { get; set; } = "#FFA5F3FC";
-
+    /// <summary>条目正文颜色（实时与外推**统一**使用，不再按来源换色）。</summary>
     public string LiveColor { get; set; } = "#FFF5F5F0";
+
+    /// <summary>未扫描到（本地外推）标记 `~` 的颜色（默认亮蓝色）。</summary>
+    public string ExtrapolatedColor { get; set; } = "#FF38BDF8";
 
     /// <summary>
     /// 显示排序：`watchlist`（名单/显示顺序，默认）｜`slot`（页-行）｜
@@ -98,8 +99,25 @@ public sealed class OverlayConfig
     /// <summary>是否在条目前显示 `#页-行`。</summary>
     public bool ShowPageSlot { get; set; }
 
-    /// <summary>是否为外推（本地推算）条目显示 `~` 标记。</summary>
+    /// <summary>
+    /// 是否显示玩家名。玩家名放在最左的**固定宽度列**（`▲`/`~` 标记左侧），
+    /// 因此不会改变右侧文字的位置。默认开。
+    /// </summary>
+    public bool ShowPlayerName { get; set; } = true;
+
+    /// <summary>玩家名列宽度（像素）。固定宽度保证右侧排版不随玩家名长度移动。</summary>
+    public double PlayerNameWidth { get; set; } = 110;
+
+    /// <summary>是否为未扫描到（本地推算）的条目显示最左 `▲` 标记。</summary>
     public bool ShowSourceMark { get; set; } = true;
+
+    /// <summary>
+    /// 无数字标号时，是否自动按行从 1 编号（将来社区自带标号时不会叠加）。
+    /// </summary>
+    public bool ShowRowNumber { get; set; } = true;
+
+    /// <summary>行间距（像素）：每行上下追加的间距，可为负以收紧。默认 2。</summary>
+    public double RowSpacing { get; set; } = 2.0;
 
     /// <summary>叠加背景不透明度 0.00–1.00（0 = 完全透明）。</summary>
     public double BackgroundOpacity { get; set; } = 0.09;
