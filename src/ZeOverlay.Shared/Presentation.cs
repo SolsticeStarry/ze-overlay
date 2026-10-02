@@ -82,8 +82,8 @@ public static class OverlaySort
 }
 
 /// <summary>
-/// 行号相关纯逻辑：判断名称是否**已带数字标号**（如 `1 滋水枪`、`【2】滋水枪`）。
-/// 当前社区的名称为空标号 ⇒ 展示时自动按行从 1 编号；将来社区自带标号则不再叠加。
+/// 行号相关纯逻辑：判断名称是否**已带数字标号**（如 `滋水枪 3`、`3 滋水枪`、`【2】滋水枪`）。
+/// 当前社区的名称为空标号 ⇒ 展示时在名称后自动补 1,2,3…；将来社区自带标号则不再叠加。
 /// </summary>
 public static class RowLabels
 {
@@ -94,6 +94,11 @@ public static class RowLabels
             return false;
         }
 
+        return HasLeadingNumber(name) || HasTrailingNumber(name);
+    }
+
+    private static bool HasLeadingNumber(string name)
+    {
         int i = 0;
         while (i < name.Length && char.IsWhiteSpace(name[i]))
         {
@@ -113,5 +118,28 @@ public static class RowLabels
         }
 
         return i > start;
+    }
+
+    private static bool HasTrailingNumber(string name)
+    {
+        int i = name.Length - 1;
+        while (i >= 0 && char.IsWhiteSpace(name[i]))
+        {
+            i--;
+        }
+
+        // 可选的闭括号（半角/全角）
+        if (i >= 0 && ")]}】）］〕".IndexOf(name[i]) >= 0)
+        {
+            i--;
+        }
+
+        int end = i;
+        while (i >= 0 && char.IsDigit(name[i]))
+        {
+            i--;
+        }
+
+        return i < end;
     }
 }

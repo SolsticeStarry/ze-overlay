@@ -120,16 +120,6 @@ public partial class OverlayWindow : Window
                 });
             }
 
-            // 行号：名称未带数字标号时，按显示顺序从 1 编号；右对齐占 2 位，避免宽度跳动。
-            if (config.ShowRowNumber && !RowLabels.HasNumberLabel(entry.ArtifactName))
-            {
-                block.Inlines.Add(new System.Windows.Documents.Run($"{i + 1,2}. ")
-                {
-                    Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
-                    FontSize = config.FontSize * 0.9,
-                });
-            }
-
             if (config.ShowPageSlot)
             {
                 block.Inlines.Add(new System.Windows.Documents.Run($"#{(int)entry.Page}-{entry.Slot:00}  ")
@@ -140,6 +130,16 @@ public partial class OverlayWindow : Window
             }
 
             block.Inlines.Add(new System.Windows.Documents.Run(entry.ArtifactName));
+
+            // 行号：紧跟在名称后、与名称同色；名称已带标号时不叠加。
+            if (config.ShowRowNumber && !RowLabels.HasNumberLabel(entry.ArtifactName))
+            {
+                block.Inlines.Add(new System.Windows.Documents.Run($" {i + 1}")
+                {
+                    Foreground = body,
+                });
+            }
+
             block.Inlines.Add(new System.Windows.Documents.Run(" " + status)
             {
                 Foreground = entry.State == ArtifactState.Cooling
