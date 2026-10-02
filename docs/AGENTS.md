@@ -23,11 +23,13 @@ C# / .NET 8（`net8.0-windows10.0.19041.0`）+ WPF，识别用 **PP-OCRv3 ONNX**
 
 **进度：M0~M5 完成；M6 进行中**（识别 12 行 602ms→~70ms，DirectML 默认开启；自包含单文件夹打包 + 启动安装包 + 自定义图标已完成，见 `PACKAGING.md`；代码签名需自备证书；int8 静态量化实测**否决**）。设置窗口已支持排序/显示风格/刷新频率/热键配置。
 
+**多社区服适配**：**逐行自动判断行格式**（本服括号 `[R]`/`[数字]` vs 社区服连写 `就绪/NNs/n/m/∞`），**无需选档案/语法**；跟踪器按「是否有服务器标号」自动切换身份（标号身份不分页 / 行槽位身份分页）。详见 `DESIGN.md` §3.8。
+
 ## 命令
 
 ```powershell
 dotnet build ZeOverlay.slnx         # 注意是 .slnx（.NET 10 SDK 新格式）
-dotnet test  ZeOverlay.slnx         # 141 个用例（Core 133 + Platform 8）
+dotnet test  ZeOverlay.slnx         # 293 个用例
 
 $gui = "src\ZeOverlay.Gui\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.Gui.exe"
 $cli = "src\ZeOverlay.Cli\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.Cli.exe"
@@ -38,8 +40,14 @@ $cli = "src\ZeOverlay.Cli\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.Cli.exe
 & $cli --capture-once --frames 20   # 采集自检（退出码 0/2/3）
 & $cli --analyze-image <png> [--roi x,y,w,h] [--glyphs]   # 行剖分 / 字形切分（--glyphs 出可视化图）
 & $cli --ocr <png> [--roi ...]      # OCR 原始行（含预处理对比诊断）
-& $cli --recognize <png> [--roi ...] [--ppocr]            # 完整识别链路离线跑
+& $cli --recognize <png> [--roi ...] [--ppocr] [--parser bracket|plain]   # 完整识别链路离线跑（--parser plain 跑社区服语法）
 & $cli --bench-ocr <png> [--roi ...] [--model <onnx>] [--threads N] [--repeat N] [--no-spin] [--ep cpu|dml] [--fixed-width N] [--batch N] [--dml-device N] [--out <txt>]  # 识别耗时拆解（墙钟/CPU/空闲/阶段）
+
+# 双服可视化：确定性场景时间线 + 连续随机仿真（输出 artifacts\*.html）
+dotnet run --project tools\ScenarioViz\ScenarioViz.csproj -c Release
+# 自动截图验收（页面打开即自动循环播放，无需手动点）：
+# chrome --headless=new --user-data-dir=<临时目录> --virtual-time-budget=5000 `
+#        --screenshot=out.png "file:///.../scenario-simulation.html?server=fys"
 ```
 
 ## 打包 / 安装（M6）
@@ -84,7 +92,7 @@ python -m venv .venv-quant
 
 | 路径 | 内容 |
 |---|---|
-| `config.json` | 配置 + 标定结果 + 叠加位置（原子写入，损坏自动备份回退） |
+| `config.json` | 配置 + 叠加位置 + ROI + **神器名表 `Vocabulary`**（原子写入，损坏自动备份回退）。首次启动会把旧的 `Profiles` 折叠成单配置 |
 | `watchlist.json` | 关注名单（≤10）+ 模糊阈值；**名单为空 = 全部显示** |
 | `models/` | PP-OCR 模型 + 字典（随 exe 复制） |
 | `shots/`、`shots/changes/` | 截图留档；列表变化前后成对帧（翻页样本） |
@@ -94,20 +102,20 @@ python -m venv .venv-quant
 
 | 项目 | 职责 |
 |---|---|
-| `src/ZeOverlay.Shared` | **共用数据**：`ImageFrame`/`PixelRect`/`RelativeRect`、各阶段 DTO、枚举、`ListRules`、管线契约 `IStage<,>` |
-| `src/ZeOverlay.Infrastructure` | 配置/日志/工具 + `Pipeline`（S1–S6 顺序） |
+| `src/ZeOverlay.Shared` | **共用数据**：`ImageFrame`/`PixelRect`/`RelativeRect`、各阶段 DTO、枚举、`ListRules`、`ParserMode`、自动选档 `ProfileDetector`、管线契约 `IStage<,>` |
+| `src/ZeOverlay.Infrastructure` | 配置/日志/工具 + `Pipeline`（S1–S6 顺序）+ 服务器档案（`Profiles`：默认值/迁移/转换） |
 | `src/ZeOverlay.Win32` | 跨 Windows 阶段共享的 Win32：`Native`/`Monitors`/`Locator`/`Png`/`Input`/离线标注 |
 | `src/ZeOverlay.Stage.ScreenCapture` | **S0** 采集（`Gdi` + `Shots` + `IScreenCaptureStage`） |
 | `src/ZeOverlay.Stage.RowAnalysis` | **S1** 行分析（`Analyzer`/`Grid`/`Cache` + `IRowAnalysisStage`） |
 | `src/ZeOverlay.Stage.GlyphSegmentation` | **S2** 字形定界+裁剪（`Segmenter` + `IGlyphSegmentationStage`） |
 | `src/ZeOverlay.Stage.Recognition` | **S3** 识别（`PpOcrEngine`/`SystemOcrEngine`/`Decoder`/`PpOcrInput` + `IRecognitionStage`/`IRowRecognizer`） |
-| `src/ZeOverlay.Stage.Parsing` | **S4** 解析（`Parser` + `IParsingStage`） |
+| `src/ZeOverlay.Stage.Parsing` | **S4** 解析（`Parser`：`bracket` 方括号锚定 / `plain` 社区服后缀状态 + `IParsingStage`） |
 | `src/ZeOverlay.Stage.Tracking` | **S5** 跟踪（`Tracker`/`Structure` + `ITrackingStage`） |
 | `src/ZeOverlay.Stage.Matching` | **S6** 名单匹配（`Matcher` + `IMatchingStage`） |
 | `src/ZeOverlay.Stage.Presentation` | **S7** 展示/叠加（WPF，`IPresentationStage`） |
 | `src/ZeOverlay.Gui` | 组合根：装配阶段 + 采集线程/节流/标定/热键/持久化（`Host.*`） |
 | `src/ZeOverlay.Cli` | 控制台离线工具：`--capture-once` / `--analyze-image` / `--ocr` / `--recognize` / `--bench-ocr` |
-| `tests/ZeOverlay.Tests` | xUnit 聚合测试（141 用例） |
+| `tests/ZeOverlay.Tests` | xUnit 聚合测试（293 用例）；`Scenarios/` = exg/fys 双服假 HUD 场景回放 + 连续随机浸泡（`RandomizedServerSimulation`：平均 ~12 条、同类多神器、EXG 12+ 翻页（~5s 一次）、场景色漂移、tick 抖动；150 种子扫描 + 2000 组随机参数模糊测试） |
 
 ## 本项目专属约束
 
@@ -150,5 +158,19 @@ python -m venv .venv-quant
 | 量化模型体积几乎不变 | 权重是 `Constant` 节点，ORT 量化器需先 `quant_pre_process` 转 initializer | 别无脑量化；见 `tools/quantize-ppocr-static.py` 注释 |
 | WPF 窗口 `Icon="app.ico"` 运行时报资源找不到 | 相对 pack URI 解析到**入口程序集**，而图标嵌在 Presentation 程序集 | 用显式 URI：`pack://application:,,,/ZeOverlay.Stage.Presentation;component/app.ico` |
 | 生成的 `.bat/.cmd` 一运行就报一堆「不是内部或外部命令」 | PS 5.1 的 `Set-Content -Encoding OEM` **会写 UTF-8 BOM**，cmd 把 BOM 当命令 | 用 `Write-OemFile`（`[IO.File]::WriteAllText` + cp936 + CRLF，无 BOM）；见三个打包脚本 |
+| 新服神器简称被当状态、玩家名和状态粘一起 | 用本服括号语法解析社区服连写文本：`人闪1` 的 `1` 被当冷却 | 该服档案用 `ParserMode=plain`；解析器从右取状态、从左取简称 |
+| 新服 `∞` 状态显示成冷却/无状态 | PP-OCR 字典无 `∞`，读成孤立 `0` 或 `8` | Plain 解析把「末尾未被数字/斜杠包围的 1~2 位孤立数字」当无限（就绪） |
+| 新服 `1.5s` 冷却变成小数/异常 | 冷却可带小数 | 已明确**丢弃小数只取整数**（`1.5s`→1） |
+| 新服一屏 >12 行时整帧观测被丢弃 | `Host.Recognition` 曾硬编 `ListRules.MaxRowsPerPage=12` | 已改为按当前档案 `MaxRowsPerPage`（社区服 16） |
+| 切换服务器后叠加还在用旧 ROI / 旧名单 | 档案未切换 | 自动选档（命中 <2 才探测其它档案，连续两次胜出才切）或 `Ctrl+Alt+P` 手动切；新服需先切过去框选一次 ROI |
 | IExpress 安装器反复运行失败/无反应 | 它固定解压到 `%TEMP%\IXP000.TMP`，上次异常退出残留会被占用 | 清掉 `IXP000.TMP` 再试；正常退出会自清理 |
 | 解决方案文件名是 `.slnx` | .NET 10 SDK 新默认 | `dotnet build ZeOverlay.slnx` |
+| 同类多神器（`水枪1/2/3`）回流后某个标号条目丢失 | 「同行位借标号」无法区分 OCR 读花与真实兄弟；跨帧借用还会借到暂时不可见的兄弟 | **标号一律采信画面读数；读丢（null）一律跳过该行、不猜**。回归 `SameNameMultipleIndices_Reflow_KeepsEachSibling`、`MissingIndex_IsSkippedInsteadOfGuessingLabel`、`RandomizedStream_ManySeeds_NoViolations`、`Fuzz_RandomOptions_FindsNoViolations` |
+| 冷却走完再次使用时倒计时卡在"就绪" | 「冷却只降不升」的防跳变把**再次使用**的新长冷却当成 OCR 读花拒收（1Hz 采样看不到中间的 `[R]` 帧） | 外推已 ≈0（`previous <= 1`）时接受新冷却；回归 `ReUse_WhenCooldownNearlyDone_IsAccepted` |
+| 冷却读数被防跳变误杀（旧条目残留） | 旧神器移除后，新神器**复用同一 `(名称,标号)`**；旧条目未超时仍在，新冷却被当成"只降不升"的尖峰拒收 | **上一帧未连续观测（`Source=Extrapolated`）时不做防跳变**；连续观测（`Live`）才启用。回归 `Fuzz_RandomOptions_FindsNoViolations` |
+| 某一帧标号全丢后身份错乱 | `byLabel` 原来逐帧由"本帧有无标号行"决定，全丢的一帧会翻成行槽位身份、造出槽位键条目 | 身份模式**粘性**：只要还有标号身份条目存在就保持标号模式 |
+| 名单匹配**张冠李戴**（实机复现） | `BuildRecognitionText` 的缓存键 `EntryKey` 用 `P{页}#{行位}`；标号身份下不同条目会撞同一行位 ⇒ 命中结果串台 | 抽到 `Shared.TrackerKeys.Identity`：标号身份用「名称+标号」、行槽位身份用「页+槽位」；回归 `TrackerKeysTests` |
+| 连写服被降回 2Hz/500ms（重构回归） | 档案折叠后 `ServerProfileConfig.CaptureFps/RecognitionIntervalMs` 不再被读取 | 运行时**自适应**：识别到带标号的行即按 **5Hz 采集 / 200ms 识别**`Host._communityMode`），括号服沿用配置 |
+| 连写服日志刷「疑似翻页」 | 结构观测按行数骤降判翻页，但社区服无翻页 | 连写模式下不再追加「疑似翻页」，只记行数/内容变化 |
+| 连写服**长倒计时经常瞬间跳 `[R]`**（实机反馈） | 冷却显示 `49s`，OCR 偶尔把结尾 `s` 读丢成 `49`；解析器「`∞` 被读成数字」的兜底把**任意 1~2 位结尾数字**都当无限 ⇒ 变就绪 | 兜底收紧为**只认单个 `0`/`8`**（实测的 `∞` 误读）；`49` 之类解析失败被丢弃、由本地外推继续走冷却。回归 `ParsePlain_DroppedCooldownSuffix_IsNotTreatedAsReady` |
+| 同名多神器**上下跳变**（`爆闪1` 窜到 `爆闪2` 下面） | 叠加排序在同名同组时用**行位**分先后，连写服回流让行位互换 | 排序收尾改用「页 → **标号** → 行位」，同名条目恒按 1、2、3… 排。回归 `Watchlist_SameNameMultiples_OrderByServerIndex_NotChurningSlot`、`Cooldown_SameNameMultiples_OrderByServerIndex` |

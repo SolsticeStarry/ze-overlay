@@ -1,0 +1,142 @@
+{
+  "engine": "PP-OCRv3-rec(6624 类)",
+  "inputLineCount": 12,
+  "parsedCount": 12,
+  "rawTexts": [
+    "人闪1大头吧唧44s   [置信 0.84]",
+    "大火盐1霓光Niko就绪   [置信 0.87]",
+    "定位1士享文14s   [置信 0.84]",
+    "定位2雨露之夏1.5s   [置信 0.90]",
+    "定位3知意雨25s   [置信 0.92]",
+    "手电1请叫我熊8   [置信 0.85]",
+    "手电2宇宙机器人8   [置信 0.88]",
+    "手电3苦涩的柠檬8   [置信 0.91]",
+    "水枪1无名字的好人就绪   [置信 0.94]",
+    "爆闪1屠夫优势图49s   [置信 0.92]",
+    "爆闪2绿光投影仪就绪   [置信 0.94]",
+    "黑闪1花雲の魔女1/1   [置信 0.85]"
+  ],
+  "watchlist": [],
+  "rows": [
+    {
+      "artifact": "人闪",
+      "player": "大头吧唧",
+      "state": "Cooling",
+      "cooldownSeconds": 44,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "人闪1大头吧唧44s"
+    },
+    {
+      "artifact": "大火盐",
+      "player": "霓光Niko",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "大火盐1霓光Niko就绪"
+    },
+    {
+      "artifact": "定位",
+      "player": "士享文",
+      "state": "Cooling",
+      "cooldownSeconds": 14,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "定位1士享文14s"
+    },
+    {
+      "artifact": "定位",
+      "player": "雨露之夏",
+      "state": "Cooling",
+      "cooldownSeconds": 1,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "定位2雨露之夏1.5s"
+    },
+    {
+      "artifact": "定位",
+      "player": "知意雨",
+      "state": "Cooling",
+      "cooldownSeconds": 25,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "定位3知意雨25s"
+    },
+    {
+      "artifact": "手电",
+      "player": "请叫我熊",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "手电1请叫我熊8"
+    },
+    {
+      "artifact": "手电",
+      "player": "宇宙机器人",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "手电2宇宙机器人8"
+    },
+    {
+      "artifact": "手电",
+      "player": "苦涩的柠檬",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "手电3苦涩的柠檬8"
+    },
+    {
+      "artifact": "水枪",
+      "player": "无名字的好人",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "水枪1无名字的好人就绪"
+    },
+    {
+      "artifact": "爆闪",
+      "player": "屠夫优势图",
+      "state": "Cooling",
+      "cooldownSeconds": 49,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "爆闪1屠夫优势图49s"
+    },
+    {
+      "artifact": "爆闪",
+      "player": "绿光投影仪",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "爆闪2绿光投影仪就绪"
+    },
+    {
+      "artifact": "黑闪",
+      "player": "花雲の魔女",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": 1,
+      "usesTotal": 1,
+      "matchedName": null,
+      "raw": "黑闪1花雲の魔女1/1"
+    }
+  ]
+}

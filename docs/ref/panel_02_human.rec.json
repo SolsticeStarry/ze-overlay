@@ -3,25 +3,20 @@
   "inputLineCount": 12,
   "parsedCount": 12,
   "rawTexts": [
-    "滋水枪[R]范德彪の奇妙冒险   [置信 0.93]",
-    "滋水枪[R]用户6116041   [置信 0.89]",
-    "紫色瓶中闪电[R]☆Komorebi★   [置信 0.89]",
-    "袋装火盐[R]析构万理的发条公主   [置信 0.95]",
-    "荧光棒[R]4/5皇家口粮   [置信 0.93]",
-    "荧光棒[R]5/5【猫娘】繁花凡   [置信 0.93]",
-    "紫色瓶中闪电[R]心绘灵   [置信 0.94]",
-    "手电筒[R]烧烤鱼   [置信 0.87]",
-    "袋装火盐[R]用户6744311   [置信 0.87]",
-    "手电筒[R]宝宝害怕   [置信 0.87]",
-    "滋水枪[R]真就一颗a   [置信 0.95]",
-    "桶装杏仁水[R]心形坠盒   [置信 0.93]"
+    "滋水枪[R]范德彪の奇妙冒险   [置信 0.94]",
+    "滋水枪[R】用户6116041   [置信 0.90]",
+    "紫色瓶中闪电[R]★Komorebi★   [置信 0.92]",
+    "袋装火盐[R]析构万理的发条公主   [置信 0.94]",
+    "荧光棒[R]4/5皇家口粮   [置信 0.92]",
+    "荧光棒[RJ5/5【猫娘】繁花凡   [置信 0.91]",
+    "紫色瓶中闪电[R]心绘灵   [置信 0.97]",
+    "手电筒[R]烧烤鱼   [置信 0.90]",
+    "袋装火盐[R】用户6744311   [置信 0.91]",
+    "手电筒[R]宝宝害怕   [置信 0.86]",
+    "滋水枪[R】真就一颗a   [置信 0.86]",
+    "桶装杏仁水[R]心形坠盒   [置信 0.90]"
   ],
-  "watchlist": [
-    "滋水枪",
-    "荧光棒",
-    "紫色瓶中闪电",
-    "皇家口粮"
-  ],
+  "watchlist": [],
   "rows": [
     {
       "artifact": "滋水枪",
@@ -30,7 +25,7 @@
       "cooldownSeconds": null,
       "usesRemaining": null,
       "usesTotal": null,
-      "matchedName": "滋水枪",
+      "matchedName": null,
       "raw": "滋水枪[R]范德彪の奇妙冒险"
     },
     {
@@ -40,18 +35,18 @@
       "cooldownSeconds": null,
       "usesRemaining": null,
       "usesTotal": null,
-      "matchedName": "滋水枪",
-      "raw": "滋水枪[R]用户6116041"
+      "matchedName": null,
+      "raw": "滋水枪[R】用户6116041"
     },
     {
       "artifact": "紫色瓶中闪电",
-      "player": "☆Komorebi★",
+      "player": "★Komorebi★",
       "state": "Ready",
       "cooldownSeconds": null,
       "usesRemaining": null,
       "usesTotal": null,
-      "matchedName": "紫色瓶中闪电",
-      "raw": "紫色瓶中闪电[R]☆Komorebi★"
+      "matchedName": null,
+      "raw": "紫色瓶中闪电[R]★Komorebi★"
     },
     {
       "artifact": "袋装火盐",
@@ -70,7 +65,7 @@
       "cooldownSeconds": null,
       "usesRemaining": 4,
       "usesTotal": 5,
-      "matchedName": "荧光棒",
+      "matchedName": null,
       "raw": "荧光棒[R]4/5皇家口粮"
     },
     {
@@ -80,8 +75,8 @@
       "cooldownSeconds": null,
       "usesRemaining": 5,
       "usesTotal": 5,
-      "matchedName": "荧光棒",
-      "raw": "荧光棒[R]5/5【猫娘】繁花凡"
+      "matchedName": null,
+      "raw": "荧光棒[RJ5/5【猫娘】繁花凡"
     },
     {
       "artifact": "紫色瓶中闪电",
@@ -90,7 +85,7 @@
       "cooldownSeconds": null,
       "usesRemaining": null,
       "usesTotal": null,
-      "matchedName": "紫色瓶中闪电",
+      "matchedName": null,
       "raw": "紫色瓶中闪电[R]心绘灵"
     },
     {
@@ -111,7 +106,7 @@
       "usesRemaining": null,
       "usesTotal": null,
       "matchedName": null,
-      "raw": "袋装火盐[R]用户6744311"
+      "raw": "袋装火盐[R】用户6744311"
     },
     {
       "artifact": "手电筒",
@@ -130,8 +125,8 @@
       "cooldownSeconds": null,
       "usesRemaining": null,
       "usesTotal": null,
-      "matchedName": "滋水枪",
-      "raw": "滋水枪[R]真就一颗a"
+      "matchedName": null,
+      "raw": "滋水枪[R】真就一颗a"
     },
     {
       "artifact": "桶装杏仁水",
