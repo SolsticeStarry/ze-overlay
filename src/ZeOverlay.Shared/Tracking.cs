@@ -75,10 +75,10 @@ public sealed class TrackerOptions
     public double MinMissIntervalSeconds { get; set; } = 2.0;
 
     /// <summary>
-    /// 自动消失时限（秒）：某槽位超过这么久没扫到数据就移除。默认 5s。
+    /// 自动消失时限（秒）：某槽位超过这么久没扫到数据就移除。默认 6s。
     /// **无条件**——翻到别的页或列表消失后，旧条目也最多再保留这么久。
     /// </summary>
-    public double DisappearAfterSeconds { get; set; } = 5.0;
+    public double DisappearAfterSeconds { get; set; } = 6.0;
 
     /// <summary>行数不低于基准行数的这个比例时，认为当前显示的是第 1 页。</summary>
     public double PageOneRowRatio { get; set; } = 0.6;

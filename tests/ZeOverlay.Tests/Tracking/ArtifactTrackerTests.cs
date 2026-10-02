@@ -97,10 +97,10 @@ public class ArtifactTrackerTests
 
         tracker.Observe(12, [], T0.AddSeconds(2));
         tracker.Observe(12, [], T0.AddSeconds(4));
-        TrackerFrameResult result = tracker.Observe(12, [], T0.AddSeconds(6));
+        TrackerFrameResult result = tracker.Observe(12, [], T0.AddSeconds(7));
 
         Assert.Contains("滋水枪", result.Removed[0]);
-        Assert.Empty(tracker.Snapshot(T0.AddSeconds(6)));
+        Assert.Empty(tracker.Snapshot(T0.AddSeconds(7)));
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class ArtifactTrackerTests
         TrackerEntryView before = tracker.Snapshot(T0.AddSeconds(3)).Single(e => e.Page == VisiblePage.Page1);
         Assert.Equal(EntrySource.Extrapolated, before.Source);
 
-        // 停留 7 秒（超过 5s 无条件超时）：第 1 页槽位消失
+        // 停留 7 秒（超过 6s 无条件超时）：第 1 页槽位消失
         for (int i = 7; i <= 14; i++)
         {
             tracker.Observe(1, [Row(0, "别的神器")], T0.AddMilliseconds(500 * i));
@@ -169,7 +169,7 @@ public class ArtifactTrackerTests
         TrackerEntryView view = tracker.Snapshot(T0.AddSeconds(3))[0];
         Assert.Equal(EntrySource.Extrapolated, view.Source);
 
-        // 停留 7 秒（超过 5s）：消失
+        // 停留 7 秒（超过 6s）：消失
         for (int i = 7; i <= 14; i++)
         {
             tracker.Observe(0, [], T0.AddMilliseconds(500 * i));
@@ -248,20 +248,20 @@ public class ArtifactTrackerTests
     }
 
     [Fact]
-    public void MissingOnVisiblePage_DisappearsAfterFiveSeconds()
+    public void MissingOnVisiblePage_DisappearsAfterSixSeconds()
     {
         var tracker = new Tracker();
         tracker.Observe(12, [Row(0, "滋水枪"), Row(1, "荧光棒")], T0);
 
-        // 4 秒：仍在
-        tracker.Observe(12, [Row(0, "滋水枪")], T0.AddSeconds(4));
-        Assert.Contains(tracker.Snapshot(T0.AddSeconds(4)), e => e.Slot == 1);
+        // 5 秒：仍在
+        tracker.Observe(12, [Row(0, "滋水枪")], T0.AddSeconds(5));
+        Assert.Contains(tracker.Snapshot(T0.AddSeconds(5)), e => e.Slot == 1);
 
-        // 6 秒：第 1 行超过 5 秒没扫到 ⇒ 自动消失
-        TrackerFrameResult result = tracker.Observe(12, [Row(0, "滋水枪")], T0.AddSeconds(6));
+        // 7 秒：第 1 行超过 6 秒没扫到 ⇒ 自动消失
+        TrackerFrameResult result = tracker.Observe(12, [Row(0, "滋水枪")], T0.AddSeconds(7));
 
         Assert.Contains("荧光棒", result.Removed[0]);
-        Assert.DoesNotContain(tracker.Snapshot(T0.AddSeconds(6)), e => e.Slot == 1);
+        Assert.DoesNotContain(tracker.Snapshot(T0.AddSeconds(7)), e => e.Slot == 1);
     }
 
     [Fact]
@@ -270,11 +270,11 @@ public class ArtifactTrackerTests
         var tracker = new Tracker();
         tracker.Observe(12, [Row(0, "滋水枪")], T0);
 
-        // 恰好 5 秒：还没超过时限，不应移除
-        TrackerFrameResult result = tracker.Observe(12, [], T0.AddSeconds(5));
+        // 恰好 6 秒：还没超过时限，不应移除
+        TrackerFrameResult result = tracker.Observe(12, [], T0.AddSeconds(6));
 
         Assert.Empty(result.Removed);
-        Assert.Single(tracker.Snapshot(T0.AddSeconds(5)));
+        Assert.Single(tracker.Snapshot(T0.AddSeconds(6)));
     }
 
     [Fact]

@@ -28,9 +28,9 @@ public sealed class AppConfig
 public sealed class TrackingConfig
 {
     /// <summary>
-    /// 某行超过这么多秒没扫到数据就自动消失。默认 5s（0.5–60）。无条件：翻页/列表消失也算。
+    /// 某行超过这么多秒没扫到数据就自动消失。默认 6s（0.5–60）。无条件：翻页/列表消失也算。
     /// </summary>
-    public double RowDisappearSeconds { get; set; } = 5.0;
+    public double RowDisappearSeconds { get; set; } = 6.0;
 }
 
 /// <summary>PP-OCR 识别运行时参数（M6）。</summary>
