@@ -66,6 +66,7 @@ public partial class SettingsWindow : Window
 
         CaptureFpsBox.Text = Configuration.Capture.Fps.ToString(CultureInfo.InvariantCulture);
         RecognitionIntervalBox.Text = Configuration.Recognition.IntervalMs.ToString(CultureInfo.InvariantCulture);
+        RowDisappearBox.Text = Configuration.Tracking.RowDisappearSeconds.ToString("0.#", CultureInfo.InvariantCulture);
 
         HotkeyConfig hotkeys = Configuration.Hotkeys;
         HotkeyTogglePreview.Text = hotkeys.TogglePreview;
@@ -234,6 +235,13 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        if (!double.TryParse(RowDisappearBox.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double disappear)
+            || disappear is < 0.5 or > 60)
+        {
+            Warn("行消失超时", "必须是 0.5 到 60 之间的数字（秒）。", RowDisappearBox);
+            return;
+        }
+
         if (!TryNormalizeColor(LiveColorBox.Text, out string live))
         {
             Warn("实时颜色", "无法识别，请用 #AARRGGBB 或 #RRGGBB。", LiveColorBox);
@@ -257,6 +265,7 @@ public partial class SettingsWindow : Window
 
         Configuration.Capture.Fps = fps;
         Configuration.Recognition.IntervalMs = interval;
+        Configuration.Tracking.RowDisappearSeconds = disappear;
 
         Configuration.Hotkeys.TogglePreview = HotkeyTogglePreview.Text.Trim();
         Configuration.Hotkeys.SelectRoi = HotkeySelectRoi.Text.Trim();
@@ -353,6 +362,10 @@ public partial class SettingsWindow : Window
                 FixedInputWidth = source.Recognition.FixedInputWidth,
                 BatchSize = source.Recognition.BatchSize,
                 IntervalMs = source.Recognition.IntervalMs,
+            },
+            Tracking = new TrackingConfig
+            {
+                RowDisappearSeconds = source.Tracking.RowDisappearSeconds,
             },
         };
     }
