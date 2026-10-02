@@ -35,6 +35,7 @@ $exe = "src\ZeOverlay.App\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.exe"
 & $exe --analyze-image <png> [--roi x,y,w,h] [--glyphs]   # 行剖分 / 字形切分（--glyphs 出可视化图）
 & $exe --ocr <png> [--roi ...]      # OCR 原始行（含预处理对比诊断）
 & $exe --recognize <png> [--roi ...] [--ppocr]            # 完整识别链路离线跑
+& $exe --bench-ocr <png> [--roi ...] [--model <onnx>] [--threads N] [--repeat N] [--no-spin] [--ep cpu|dml] [--fixed-width N] [--batch N] [--dml-device N] [--out <txt>]  # 识别耗时拆解（墙钟/CPU/空闲/阶段）
 ```
 
 ## 热键（实际生效值；注册失败会自动回退到候选）
@@ -98,4 +99,10 @@ $exe = "src\ZeOverlay.App\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.exe"
 | 倒计时/uses 闪烁 | OCR 间歇漏读 `n/m` | 同槽位同神器时没读到就保留旧值（粘滞） |
 | `Ctrl+Alt+R` / `Ctrl+Alt+D` 注册失败 | 被其它程序占用 | 已内置候选回退，以状态栏与日志为准 |
 | NuGet / GitHub 直连失败 | 本机走本地代理且时通时断 | 设 `HTTP(S)_PROXY=http://127.0.0.1:7897` 重试；模型改从 **PyPI** 取 |
+| 识别 12 行要 ~0.6s | CTC 解码用 `Tensor<T>` 多维索引器逐元素取；`FillInput` 每行列坐标重复算 | 已修（读底层 span + 预计算列）→ **~0.15s**；见 `DESIGN.md` §5 M6 |
+| int8 动态量化没效果还更慢 | 该模型 36 Conv，`quantize_dynamic` 只量化 MatMul | 别用动态量化；要 int8 必须**静态 + 校准集** |
+| CPU 占用偏高 | ORT 工作线程在两次 Run 间**自旋** | `Recognition.AllowSpinning=false`（默认）；线程数 `Recognition.IntraOpThreads` |
+| 本机 CPU 计时不可信 | `Process.TotalProcessorTime` 失真（忙等 300ms 只读到 31~94ms） | CPU 结论以真机/外部计数器为准，别信单进程读数 |
+| DML 运行崩溃 `0x80070057` | 没带对版本的 `DirectML.dll`，回退加载了 `System32` 的旧版 | 复制 `Microsoft.AI.DirectML` 的 win-x64 `DirectML.dll` 到 exe 旁（`ZeOverlay.App.csproj` 已配） |
+| DML 比 CPU 还慢 | 每行宽度不同 → DML 反复重编译算子 | `Recognition.FixedInputWidth=640`（或 `--fixed-width 640`） |
 | 解决方案文件名是 `.slnx` | .NET 10 SDK 新默认 | `dotnet build ZeOverlay.slnx` |

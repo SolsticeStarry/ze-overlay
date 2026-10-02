@@ -37,6 +37,8 @@ public sealed class AppHost : IDisposable
     private readonly IScreenCapture _capture = new GdiScreenCapture();
     private readonly IOcrEngine _ocr = new WindowsMediaOcrEngine();
     private PpOcrRecEngine? _ppOcr;
+    private int _ppOcrFixedWidth;
+    private int _ppOcrBatchSize = 1;
     private readonly ArtifactTracker _tracker = new();
     private readonly Dictionary<string, int> _recentNameCounts = new(StringComparer.Ordinal);
     private readonly object _recentNamesGate = new();
@@ -140,16 +142,55 @@ public sealed class AppHost : IDisposable
 
         if (File.Exists(modelPath) && File.Exists(keysPath))
         {
+            int? threads = _config.Recognition.IntraOpThreads > 0 ? _config.Recognition.IntraOpThreads : null;
+            bool useDml = string.Equals(_config.Recognition.ExecutionProvider, "directml", StringComparison.OrdinalIgnoreCase);
+            int fixedWidth = _config.Recognition.FixedInputWidth;
+            int batchSize = _config.Recognition.BatchSize > 0
+                ? _config.Recognition.BatchSize
+                : (useDml ? 12 : 1);
+
+            // DML 对输入形状敏感（换宽度即重编译），未显式配置时给一个安全默认。
+            if (useDml && fixedWidth <= 0)
+            {
+                fixedWidth = 640;
+            }
+
             try
             {
-                _ppOcr = new PpOcrRecEngine(modelPath, keysPath);
-                _log?.Info($"PP-OCR 已加载：{_ppOcr.Name}（按行识别，不需要检测模型）");
+                _ppOcr = new PpOcrRecEngine(modelPath, keysPath, threads, _config.Recognition.AllowSpinning,
+                    useDml ? OcrExecutionProvider.DirectML : OcrExecutionProvider.Cpu);
+                _log?.Info(
+                    $"PP-OCR 已加载：{_ppOcr.Name}（按行识别，不需要检测模型；"
+                    + $"线程={(threads is { } t ? t.ToString(CultureInfo.InvariantCulture) : "自动")}；"
+                    + $"自旋={(_config.Recognition.AllowSpinning ? "开" : "关")}；"
+                    + $"固定宽度={(fixedWidth > 0 ? fixedWidth.ToString(CultureInfo.InvariantCulture) : "关")}；"
+                    + $"批大小={batchSize}）");
+            }
+            catch (Exception ex) when (useDml)
+            {
+                // DX12/驱动不可用时不能因为一块 GPU 把识别整个废掉，回退 CPU。
+                _log?.Warn($"DirectML 会话创建失败，回退 CPU EP：{ex.Message}");
+                try
+                {
+                    _ppOcr = new PpOcrRecEngine(modelPath, keysPath, threads, _config.Recognition.AllowSpinning, OcrExecutionProvider.Cpu);
+                    fixedWidth = 0;
+                    batchSize = 1;
+                    _log?.Info($"PP-OCR 已回退 CPU：{_ppOcr.Name}");
+                }
+                catch (Exception fallbackEx)
+                {
+                    _log?.Error("加载 PP-OCR 模型失败，回退系统 OCR", fallbackEx);
+                    _ppOcr = null;
+                }
             }
             catch (Exception ex)
             {
                 _log?.Error("加载 PP-OCR 模型失败，回退系统 OCR", ex);
                 _ppOcr = null;
             }
+
+            _ppOcrFixedWidth = _ppOcr is not null ? fixedWidth : 0;
+            _ppOcrBatchSize = _ppOcr is not null ? batchSize : 1;
         }
         else
         {
@@ -746,7 +787,7 @@ public sealed class AppHost : IDisposable
             engineLabel = _ppOcr.Name;
 
             var watch = Stopwatch.StartNew();
-            IReadOnlyList<PpOcrRowResult> rows = _ppOcr.RecognizeRows(frame, bands);
+            IReadOnlyList<PpOcrRowResult> rows = _ppOcr.RecognizeRows(frame, bands, 3, _ppOcrFixedWidth, _ppOcrBatchSize);
             watch.Stop();
             _lastOcrMs = watch.Elapsed.TotalMilliseconds;
 
