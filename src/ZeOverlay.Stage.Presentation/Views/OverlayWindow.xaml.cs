@@ -161,7 +161,37 @@ public partial class OverlayWindow : Window
                 });
             }
 
-            Rows.Children.Add(block);
+            if (config.ShowPlayerName)
+            {
+                // 两列：左=玩家名（固定宽度、右对齐），右=正文（编号+名称+状态）。
+                // 固定宽度保证玩家名再长也不会推动右侧文字。
+                var grid = new Grid();
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(Math.Max(40, config.PlayerNameWidth)) });
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var player = new TextBlock
+                {
+                    Text = entry.PlayerName ?? string.Empty,
+                    FontSize = config.FontSize * 0.85,
+                    Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                    TextAlignment = TextAlignment.Right,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    TextWrapping = TextWrapping.NoWrap,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 8, 0),
+                };
+                Grid.SetColumn(player, 0);
+                Grid.SetColumn(block, 1);
+
+                grid.Children.Add(player);
+                grid.Children.Add(block);
+                Rows.Children.Add(grid);
+            }
+            else
+            {
+                Rows.Children.Add(block);
+            }
         }
     }
 

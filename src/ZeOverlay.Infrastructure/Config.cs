@@ -99,6 +99,15 @@ public sealed class OverlayConfig
     /// <summary>是否在条目前显示 `#页-行`。</summary>
     public bool ShowPageSlot { get; set; }
 
+    /// <summary>
+    /// 是否显示玩家名。玩家名放在最左的**固定宽度列**（`▲`/`~` 标记左侧），
+    /// 因此不会改变右侧文字的位置。默认开。
+    /// </summary>
+    public bool ShowPlayerName { get; set; } = true;
+
+    /// <summary>玩家名列宽度（像素）。固定宽度保证右侧排版不随玩家名长度移动。</summary>
+    public double PlayerNameWidth { get; set; } = 110;
+
     /// <summary>是否为未扫描到（本地推算）的条目显示最左 `▲` 标记。</summary>
     public bool ShowSourceMark { get; set; } = true;
 

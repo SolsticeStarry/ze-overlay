@@ -27,6 +27,8 @@ public sealed class Tracker
 
         public string ArtifactName { get; set; } = string.Empty;
 
+        public string PlayerName { get; set; } = string.Empty;
+
         public ArtifactState State { get; set; } = ArtifactState.Unknown;
 
         public int? CooldownAtObservation { get; set; }
@@ -85,7 +87,8 @@ public sealed class Tracker
                 entry.Source,
                 entry.FirstSeen,
                 entry.LastSeen,
-                entry.MissedSessions));
+                entry.MissedSessions,
+                entry.PlayerName));
         }
 
         return views;
@@ -131,6 +134,7 @@ public sealed class Tracker
             bool sameArtifact = string.Equals(entry.ArtifactName, row.ArtifactName, StringComparison.Ordinal);
 
             entry.ArtifactName = row.ArtifactName;
+            entry.PlayerName = row.PlayerName ?? string.Empty;
             entry.State = row.State;
             entry.CooldownAtObservation = row.State == ArtifactState.Cooling ? row.CooldownSeconds : null;
 

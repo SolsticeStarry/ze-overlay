@@ -289,6 +289,17 @@ public class ArtifactTrackerTests
         Assert.Contains("滋水枪", result.Removed[0]);
     }
 
+    [Fact]
+    public void PlayerName_IsTrackedAndUpdated()
+    {
+        var tracker = new Tracker();
+        tracker.Observe(12, [new ObservedRow(0, "滋水枪", ArtifactState.Ready, null, null, null, "亦陌雕")], T0);
+        Assert.Equal("亦陌雕", tracker.Snapshot(T0)[0].PlayerName);
+
+        tracker.Observe(12, [new ObservedRow(0, "滋水枪", ArtifactState.Ready, null, null, null, "楚门潇")], T0.AddSeconds(1));
+        Assert.Equal("楚门潇", tracker.Snapshot(T0.AddSeconds(1))[0].PlayerName);
+    }
+
     private static ObservedRow Row(
         int slot,
         string artifact,

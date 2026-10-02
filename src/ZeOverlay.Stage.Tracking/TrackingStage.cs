@@ -29,7 +29,8 @@ public sealed class TrackingStage : ITrackingStage
                 row.State,
                 row.CooldownSeconds,
                 row.UsesRemaining,
-                row.UsesTotal));
+                row.UsesTotal,
+                row.PlayerName));
         }
 
         TrackerFrameResult result = _tracker.Observe(input.RowCount, observed, input.Now);

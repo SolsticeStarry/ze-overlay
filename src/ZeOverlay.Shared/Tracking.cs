@@ -32,14 +32,15 @@ public enum VisiblePage
     Page2,
 }
 
-/// <summary>一行的识别结果。**只带行号，不带玩家名**。</summary>
+/// <summary>一行的识别结果。身份只用行号；玩家名仅作展示（不参与身份）。</summary>
 public sealed record ObservedRow(
     int Slot,
     string ArtifactName,
     ArtifactState State,
     int? CooldownSeconds = null,
     int? UsesRemaining = null,
-    int? UsesTotal = null);
+    int? UsesTotal = null,
+    string PlayerName = "");
 
 /// <summary>对外展示的条目（倒计时已按墙钟外推）。</summary>
 public sealed record TrackerEntryView(
@@ -53,7 +54,8 @@ public sealed record TrackerEntryView(
     EntrySource Source,
     DateTimeOffset FirstSeen,
     DateTimeOffset LastSeen,
-    int MissedSessions)
+    int MissedSessions,
+    string PlayerName = "")
 {
     public string Display => $"{ArtifactName} (第{(int)Page}页 #{Slot})";
 }
