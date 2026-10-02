@@ -103,13 +103,14 @@ public partial class OverlayWindow : Window
             };
 
             // 最左：为未扫描到标记 △ 预留固定宽度。
-            // 关键：实时行也用**同字形**（只是透明），这样无论有没有 △，正文起点都一致，不会左右跳动。
+            // 关键：实时行也用**同字形同字号**（只是透明），这样无论有没有 △，正文起点都一致，不会左右跳动。
             if (config.ShowSourceMark)
             {
                 block.Inlines.Add(new System.Windows.Documents.Run("△ ")
                 {
                     Foreground = entry.Source == EntrySource.Live ? Brushes.Transparent : marker,
                     FontWeight = FontWeights.Bold,
+                    FontSize = config.FontSize * 1.5,
                 });
             }
 
