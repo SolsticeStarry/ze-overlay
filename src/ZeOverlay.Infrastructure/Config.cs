@@ -87,7 +87,7 @@ public sealed class OverlayConfig
     /// <summary>条目正文颜色（实时与外推**统一**使用，不再按来源换色）。</summary>
     public string LiveColor { get; set; } = "#FFF5F5F0";
 
-    /// <summary>未扫描到（本地外推）标记 `▲` 的颜色（默认亮蓝色）。</summary>
+    /// <summary>未扫描到（本地外推）标记 `~` 的颜色（默认亮蓝色）。</summary>
     public string ExtrapolatedColor { get; set; } = "#FF38BDF8";
 
     /// <summary>

@@ -88,7 +88,7 @@
 
                         <CheckBox x:Name="ShowUsesCheck" Content="显示剩余次数 n/m" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
                         <CheckBox x:Name="ShowPageSlotCheck" Content="显示 #页-行 前缀" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
-                        <CheckBox x:Name="ShowSourceMarkCheck" Content="未扫描到标记 ▲（置于最左）" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
+                        <CheckBox x:Name="ShowSourceMarkCheck" Content="未扫描到标记 ~（置于最左）" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
                         <CheckBox x:Name="ShowRowNumberCheck" Content="无数字标号时按类编号（滋水枪1、滋水枪2…）" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -100,7 +100,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                             <TextBlock Text="文字颜色：" Foreground="#FFE4E4E7" Width="120" VerticalAlignment="Center" />
                             <TextBox x:Name="LiveColorBox" Width="120" Height="26" />
-                            <TextBlock Text="未扫到 ▲ 颜色：" Foreground="#FFE4E4E7" Width="110" VerticalAlignment="Center" Margin="16,0,0,0" />
+                            <TextBlock Text="未扫到 ~ 颜色：" Foreground="#FFE4E4E7" Width="110" VerticalAlignment="Center" Margin="16,0,0,0" />
                             <TextBox x:Name="ExtrapolatedColorBox" Width="120" Height="26" />
                         </StackPanel>
 
