@@ -89,7 +89,7 @@
                         <CheckBox x:Name="ShowUsesCheck" Content="显示剩余次数 n/m" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
                         <CheckBox x:Name="ShowPageSlotCheck" Content="显示 #页-行 前缀" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
                         <CheckBox x:Name="ShowSourceMarkCheck" Content="未扫描到标记 ▲（置于最左）" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
-                        <CheckBox x:Name="ShowRowNumberCheck" Content="无数字标号时在名称后自动编号 1,2,3…" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
+                        <CheckBox x:Name="ShowRowNumberCheck" Content="无数字标号时按类编号（滋水枪1、滋水枪2…）" Foreground="#FFE4E4E7" Margin="0,0,0,6" />
 
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <TextBlock Text="行间距：" Foreground="#FFE4E4E7" Width="120" VerticalAlignment="Center" />

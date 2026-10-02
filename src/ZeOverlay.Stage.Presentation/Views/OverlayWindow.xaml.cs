@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -83,6 +84,9 @@ public partial class OverlayWindow : Window
         Brush marker = Parse(config.ExtrapolatedColor);
         double halfSpacing = config.RowSpacing / 2.0;
 
+        // 按神器名分别计数：同类从 1 递增（滋水枪1、滋水枪2、袋装火盐1…）。
+        var typeCounters = new Dictionary<string, int>(StringComparer.Ordinal);
+
         for (int i = 0; i < entries.Count; i++)
         {
             TrackerEntryView entry = entries[i];
@@ -131,10 +135,12 @@ public partial class OverlayWindow : Window
 
             block.Inlines.Add(new System.Windows.Documents.Run(entry.ArtifactName));
 
-            // 行号：紧跟在名称后、与名称同色；名称已带标号时不叠加。
+            // 标号：紧贴名称后、与名称同色；**按神器类型**分别编号（同类 1,2,3…）。
             if (config.ShowRowNumber && !RowLabels.HasNumberLabel(entry.ArtifactName))
             {
-                block.Inlines.Add(new System.Windows.Documents.Run($" {i + 1}")
+                int n = typeCounters.TryGetValue(entry.ArtifactName, out int c) ? c + 1 : 1;
+                typeCounters[entry.ArtifactName] = n;
+                block.Inlines.Add(new System.Windows.Documents.Run(n.ToString(CultureInfo.InvariantCulture))
                 {
                     Foreground = body,
                 });
