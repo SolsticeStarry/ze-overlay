@@ -1,0 +1,123 @@
+{
+  "engine": "系统OCR(zh-Hans-CN)",
+  "ocrLineCount": 11,
+  "parsedCount": 11,
+  "watchlist": [
+    "滋水枪",
+    "荧光棒",
+    "紫色瓶中闪电",
+    "皇家口粮"
+  ],
+  "rows": [
+    {
+      "artifact": "皇家口粮",
+      "player": "亦陌雕",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": 1,
+      "usesTotal": 1,
+      "matchedName": "皇家口粮",
+      "raw": "皇 家 口 粮 [ R ] 1 ／ 1 亦 陌 雕"
+    },
+    {
+      "artifact": "紫色瓶中闪电",
+      "player": "用户6744311",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": "紫色瓶中闪电",
+      "raw": "紫 色 瓶 中 闪 电 [RI 用 户 6744311"
+    },
+    {
+      "artifact": "爆闪相机",
+      "player": "（一个真正的man）",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "爆 闪 相 机 [R] （ 一 个 真 正 的 man ）"
+    },
+    {
+      "artifact": "滋水枪",
+      "player": "IMr.YYX",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": "滋水枪",
+      "raw": "滋 水 枪 [RI Mr.YYX"
+    },
+    {
+      "artifact": "爆闪相机",
+      "player": "真就一颗a",
+      "state": "Cooling",
+      "cooldownSeconds": 12,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "爆 闪 相 机 [ 12 ] 真 就 一 颗 a"
+    },
+    {
+      "artifact": "黑色瓶中闪电",
+      "player": "不会狙娱乐",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": 1,
+      "usesTotal": 1,
+      "matchedName": null,
+      "raw": "黑 色 瓶 中 闪 电 [ R ] 1 / 1 不 会 狙 娱 乐"
+    },
+    {
+      "artifact": "手电筒",
+      "player": "游戏尘寰、",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "手 电 筒 [RI 游 戏 尘 寰 、"
+    },
+    {
+      "artifact": "灵体定位仪",
+      "player": "小柒Lucky",
+      "state": "Cooling",
+      "cooldownSeconds": 20,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "灵 体 定 位 仪 [ 20 ] 小 柒 Lucky"
+    },
+    {
+      "artifact": "袋装火盐",
+      "player": "街望",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "袋 装 火 盐 [R] 街 望"
+    },
+    {
+      "artifact": "桶装杏仁水",
+      "player": "豆浆机洗脚",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "桶 装 杏 仁 水 [RI 豆 浆 机 洗 脚"
+    },
+    {
+      "artifact": "滋水枪",
+      "player": "楚门潇",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": "滋水枪",
+      "raw": "滋 水 枪 [R] 楚 门 潇"
+    }
+  ]
+}

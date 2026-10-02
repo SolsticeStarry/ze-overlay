@@ -1,0 +1,1637 @@
+{
+  "glyphLines": [
+    {
+      "row": 0,
+      "bandTop": 42,
+      "bandBottom": 59,
+      "inkThreshold": 189.93,
+      "background": 125.27,
+      "glyphCount": 14,
+      "glyphs": [
+        {
+          "left": 40,
+          "right": 58,
+          "top": 42,
+          "bottom": 59,
+          "width": 19,
+          "height": 18,
+          "ink": 155
+        },
+        {
+          "left": 62,
+          "right": 79,
+          "top": 42,
+          "bottom": 59,
+          "width": 18,
+          "height": 18,
+          "ink": 94
+        },
+        {
+          "left": 82,
+          "right": 100,
+          "top": 42,
+          "bottom": 59,
+          "width": 19,
+          "height": 18,
+          "ink": 145
+        },
+        {
+          "left": 110,
+          "right": 113,
+          "top": 44,
+          "bottom": 61,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 116,
+          "right": 128,
+          "top": 44,
+          "bottom": 58,
+          "width": 13,
+          "height": 15,
+          "ink": 83
+        },
+        {
+          "left": 130,
+          "right": 133,
+          "top": 44,
+          "bottom": 61,
+          "width": 4,
+          "height": 18,
+          "ink": 40
+        },
+        {
+          "left": 143,
+          "right": 160,
+          "top": 42,
+          "bottom": 59,
+          "width": 18,
+          "height": 18,
+          "ink": 126
+        },
+        {
+          "left": 163,
+          "right": 181,
+          "top": 42,
+          "bottom": 59,
+          "width": 19,
+          "height": 18,
+          "ink": 162
+        },
+        {
+          "left": 184,
+          "right": 202,
+          "top": 42,
+          "bottom": 59,
+          "width": 19,
+          "height": 18,
+          "ink": 143
+        },
+        {
+          "left": 206,
+          "right": 222,
+          "top": 44,
+          "bottom": 58,
+          "width": 17,
+          "height": 15,
+          "ink": 96
+        },
+        {
+          "left": 227,
+          "right": 244,
+          "top": 42,
+          "bottom": 59,
+          "width": 18,
+          "height": 18,
+          "ink": 134
+        },
+        {
+          "left": 247,
+          "right": 265,
+          "top": 42,
+          "bottom": 59,
+          "width": 19,
+          "height": 18,
+          "ink": 122
+        },
+        {
+          "left": 270,
+          "right": 284,
+          "top": 42,
+          "bottom": 59,
+          "width": 15,
+          "height": 18,
+          "ink": 136
+        },
+        {
+          "left": 290,
+          "right": 307,
+          "top": 42,
+          "bottom": 59,
+          "width": 18,
+          "height": 18,
+          "ink": 138
+        }
+      ]
+    },
+    {
+      "row": 1,
+      "bandTop": 74,
+      "bandBottom": 88,
+      "inkThreshold": 192.8,
+      "background": 117.19,
+      "glyphCount": 15,
+      "glyphs": [
+        {
+          "left": 41,
+          "right": 58,
+          "top": 72,
+          "bottom": 88,
+          "width": 18,
+          "height": 17,
+          "ink": 143
+        },
+        {
+          "left": 62,
+          "right": 79,
+          "top": 72,
+          "bottom": 89,
+          "width": 18,
+          "height": 18,
+          "ink": 93
+        },
+        {
+          "left": 82,
+          "right": 100,
+          "top": 72,
+          "bottom": 89,
+          "width": 19,
+          "height": 18,
+          "ink": 141
+        },
+        {
+          "left": 110,
+          "right": 113,
+          "top": 74,
+          "bottom": 90,
+          "width": 4,
+          "height": 17,
+          "ink": 36
+        },
+        {
+          "left": 116,
+          "right": 128,
+          "top": 74,
+          "bottom": 88,
+          "width": 13,
+          "height": 15,
+          "ink": 82
+        },
+        {
+          "left": 130,
+          "right": 133,
+          "top": 74,
+          "bottom": 90,
+          "width": 4,
+          "height": 17,
+          "ink": 36
+        },
+        {
+          "left": 143,
+          "right": 159,
+          "top": 73,
+          "bottom": 89,
+          "width": 17,
+          "height": 17,
+          "ink": 140
+        },
+        {
+          "left": 164,
+          "right": 179,
+          "top": 72,
+          "bottom": 89,
+          "width": 16,
+          "height": 18,
+          "ink": 78
+        },
+        {
+          "left": 184,
+          "right": 193,
+          "top": 74,
+          "bottom": 88,
+          "width": 10,
+          "height": 15,
+          "ink": 66
+        },
+        {
+          "left": 198,
+          "right": 202,
+          "top": 74,
+          "bottom": 88,
+          "width": 5,
+          "height": 15,
+          "ink": 36
+        },
+        {
+          "left": 208,
+          "right": 212,
+          "top": 74,
+          "bottom": 88,
+          "width": 5,
+          "height": 15,
+          "ink": 36
+        },
+        {
+          "left": 218,
+          "right": 227,
+          "top": 74,
+          "bottom": 88,
+          "width": 10,
+          "height": 15,
+          "ink": 66
+        },
+        {
+          "left": 230,
+          "right": 239,
+          "top": 74,
+          "bottom": 88,
+          "width": 10,
+          "height": 15,
+          "ink": 61
+        },
+        {
+          "left": 242,
+          "right": 251,
+          "top": 74,
+          "bottom": 87,
+          "width": 10,
+          "height": 14,
+          "ink": 57
+        },
+        {
+          "left": 256,
+          "right": 260,
+          "top": 74,
+          "bottom": 88,
+          "width": 5,
+          "height": 15,
+          "ink": 36
+        }
+      ]
+    },
+    {
+      "row": 2,
+      "bandTop": 103,
+      "bandBottom": 119,
+      "inkThreshold": 191.81,
+      "background": 123.73,
+      "glyphCount": 19,
+      "glyphs": [
+        {
+          "left": 40,
+          "right": 58,
+          "top": 101,
+          "bottom": 119,
+          "width": 19,
+          "height": 19,
+          "ink": 154
+        },
+        {
+          "left": 61,
+          "right": 79,
+          "top": 102,
+          "bottom": 119,
+          "width": 19,
+          "height": 18,
+          "ink": 141
+        },
+        {
+          "left": 83,
+          "right": 100,
+          "top": 102,
+          "bottom": 119,
+          "width": 18,
+          "height": 18,
+          "ink": 158
+        },
+        {
+          "left": 104,
+          "right": 120,
+          "top": 102,
+          "bottom": 119,
+          "width": 17,
+          "height": 18,
+          "ink": 106
+        },
+        {
+          "left": 125,
+          "right": 141,
+          "top": 102,
+          "bottom": 119,
+          "width": 17,
+          "height": 18,
+          "ink": 116
+        },
+        {
+          "left": 147,
+          "right": 163,
+          "top": 102,
+          "bottom": 119,
+          "width": 17,
+          "height": 18,
+          "ink": 146
+        },
+        {
+          "left": 173,
+          "right": 176,
+          "top": 104,
+          "bottom": 121,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 179,
+          "right": 191,
+          "top": 104,
+          "bottom": 118,
+          "width": 13,
+          "height": 15,
+          "ink": 83
+        },
+        {
+          "left": 193,
+          "right": 196,
+          "top": 104,
+          "bottom": 121,
+          "width": 4,
+          "height": 18,
+          "ink": 40
+        },
+        {
+          "left": 206,
+          "right": 222,
+          "top": 102,
+          "bottom": 118,
+          "width": 17,
+          "height": 17,
+          "ink": 42
+        },
+        {
+          "left": 227,
+          "right": 238,
+          "top": 104,
+          "bottom": 118,
+          "width": 12,
+          "height": 15,
+          "ink": 73
+        },
+        {
+          "left": 240,
+          "right": 249,
+          "top": 108,
+          "bottom": 118,
+          "width": 10,
+          "height": 11,
+          "ink": 51
+        },
+        {
+          "left": 253,
+          "right": 266,
+          "top": 108,
+          "bottom": 118,
+          "width": 14,
+          "height": 11,
+          "ink": 65
+        },
+        {
+          "left": 270,
+          "right": 279,
+          "top": 108,
+          "bottom": 118,
+          "width": 10,
+          "height": 11,
+          "ink": 50
+        },
+        {
+          "left": 283,
+          "right": 287,
+          "top": 108,
+          "bottom": 118,
+          "width": 5,
+          "height": 11,
+          "ink": 22
+        },
+        {
+          "left": 289,
+          "right": 298,
+          "top": 108,
+          "bottom": 118,
+          "width": 10,
+          "height": 11,
+          "ink": 61
+        },
+        {
+          "left": 302,
+          "right": 310,
+          "top": 104,
+          "bottom": 118,
+          "width": 9,
+          "height": 15,
+          "ink": 57
+        },
+        {
+          "left": 314,
+          "right": 315,
+          "top": 104,
+          "bottom": 118,
+          "width": 2,
+          "height": 15,
+          "ink": 23
+        },
+        {
+          "left": 320,
+          "right": 333,
+          "top": 105,
+          "bottom": 118,
+          "width": 14,
+          "height": 14,
+          "ink": 49
+        }
+      ]
+    },
+    {
+      "row": 3,
+      "bandTop": 133,
+      "bandBottom": 150,
+      "inkThreshold": 192.84,
+      "background": 129.88,
+      "glyphCount": 16,
+      "glyphs": [
+        {
+          "left": 46,
+          "right": 64,
+          "top": 133,
+          "bottom": 150,
+          "width": 19,
+          "height": 18,
+          "ink": 132
+        },
+        {
+          "left": 68,
+          "right": 84,
+          "top": 133,
+          "bottom": 150,
+          "width": 17,
+          "height": 18,
+          "ink": 142
+        },
+        {
+          "left": 89,
+          "right": 105,
+          "top": 133,
+          "bottom": 150,
+          "width": 17,
+          "height": 18,
+          "ink": 73
+        },
+        {
+          "left": 110,
+          "right": 126,
+          "top": 133,
+          "bottom": 150,
+          "width": 17,
+          "height": 18,
+          "ink": 136
+        },
+        {
+          "left": 137,
+          "right": 140,
+          "top": 135,
+          "bottom": 152,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 143,
+          "right": 155,
+          "top": 135,
+          "bottom": 149,
+          "width": 13,
+          "height": 15,
+          "ink": 82
+        },
+        {
+          "left": 157,
+          "right": 160,
+          "top": 135,
+          "bottom": 152,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 169,
+          "right": 187,
+          "top": 133,
+          "bottom": 150,
+          "width": 19,
+          "height": 18,
+          "ink": 123
+        },
+        {
+          "left": 190,
+          "right": 208,
+          "top": 133,
+          "bottom": 150,
+          "width": 19,
+          "height": 18,
+          "ink": 130
+        },
+        {
+          "left": 212,
+          "right": 228,
+          "top": 134,
+          "bottom": 150,
+          "width": 17,
+          "height": 17,
+          "ink": 82
+        },
+        {
+          "left": 233,
+          "right": 250,
+          "top": 133,
+          "bottom": 150,
+          "width": 18,
+          "height": 18,
+          "ink": 165
+        },
+        {
+          "left": 254,
+          "right": 270,
+          "top": 133,
+          "bottom": 150,
+          "width": 17,
+          "height": 18,
+          "ink": 124
+        },
+        {
+          "left": 275,
+          "right": 292,
+          "top": 133,
+          "bottom": 150,
+          "width": 18,
+          "height": 18,
+          "ink": 127
+        },
+        {
+          "left": 296,
+          "right": 312,
+          "top": 133,
+          "bottom": 150,
+          "width": 17,
+          "height": 18,
+          "ink": 111
+        },
+        {
+          "left": 317,
+          "right": 334,
+          "top": 133,
+          "bottom": 150,
+          "width": 18,
+          "height": 18,
+          "ink": 82
+        },
+        {
+          "left": 338,
+          "right": 355,
+          "top": 133,
+          "bottom": 150,
+          "width": 18,
+          "height": 18,
+          "ink": 96
+        }
+      ]
+    },
+    {
+      "row": 4,
+      "bandTop": 165,
+      "bandBottom": 180,
+      "inkThreshold": 191.94,
+      "background": 119.86,
+      "glyphCount": 14,
+      "glyphs": [
+        {
+          "left": 41,
+          "right": 57,
+          "top": 163,
+          "bottom": 180,
+          "width": 17,
+          "height": 18,
+          "ink": 143
+        },
+        {
+          "left": 62,
+          "right": 79,
+          "top": 163,
+          "bottom": 180,
+          "width": 18,
+          "height": 18,
+          "ink": 107
+        },
+        {
+          "left": 82,
+          "right": 100,
+          "top": 163,
+          "bottom": 180,
+          "width": 19,
+          "height": 18,
+          "ink": 147
+        },
+        {
+          "left": 110,
+          "right": 113,
+          "top": 165,
+          "bottom": 182,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 116,
+          "right": 128,
+          "top": 165,
+          "bottom": 179,
+          "width": 13,
+          "height": 15,
+          "ink": 83
+        },
+        {
+          "left": 130,
+          "right": 133,
+          "top": 165,
+          "bottom": 182,
+          "width": 4,
+          "height": 18,
+          "ink": 40
+        },
+        {
+          "left": 136,
+          "right": 145,
+          "top": 165,
+          "bottom": 178,
+          "width": 10,
+          "height": 14,
+          "ink": 57
+        },
+        {
+          "left": 148,
+          "right": 152,
+          "top": 165,
+          "bottom": 179,
+          "width": 5,
+          "height": 15,
+          "ink": 21
+        },
+        {
+          "left": 154,
+          "right": 163,
+          "top": 165,
+          "bottom": 179,
+          "width": 10,
+          "height": 15,
+          "ink": 62
+        },
+        {
+          "left": 173,
+          "right": 189,
+          "top": 163,
+          "bottom": 180,
+          "width": 17,
+          "height": 18,
+          "ink": 182
+        },
+        {
+          "left": 194,
+          "right": 211,
+          "top": 163,
+          "bottom": 180,
+          "width": 18,
+          "height": 18,
+          "ink": 134
+        },
+        {
+          "left": 216,
+          "right": 230,
+          "top": 165,
+          "bottom": 180,
+          "width": 15,
+          "height": 16,
+          "ink": 89
+        },
+        {
+          "left": 235,
+          "right": 242,
+          "top": 163,
+          "bottom": 180,
+          "width": 8,
+          "height": 18,
+          "ink": 68
+        },
+        {
+          "left": 244,
+          "right": 253,
+          "top": 163,
+          "bottom": 180,
+          "width": 10,
+          "height": 18,
+          "ink": 96
+        }
+      ]
+    },
+    {
+      "row": 5,
+      "bandTop": 193,
+      "bandBottom": 210,
+      "inkThreshold": 193.82,
+      "background": 124.41,
+      "glyphCount": 18,
+      "glyphs": [
+        {
+          "left": 41,
+          "right": 57,
+          "top": 193,
+          "bottom": 210,
+          "width": 17,
+          "height": 18,
+          "ink": 140
+        },
+        {
+          "left": 62,
+          "right": 79,
+          "top": 193,
+          "bottom": 210,
+          "width": 18,
+          "height": 18,
+          "ink": 101
+        },
+        {
+          "left": 82,
+          "right": 100,
+          "top": 193,
+          "bottom": 210,
+          "width": 19,
+          "height": 18,
+          "ink": 145
+        },
+        {
+          "left": 110,
+          "right": 113,
+          "top": 195,
+          "bottom": 212,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 116,
+          "right": 127,
+          "top": 195,
+          "bottom": 209,
+          "width": 12,
+          "height": 15,
+          "ink": 81
+        },
+        {
+          "left": 130,
+          "right": 133,
+          "top": 195,
+          "bottom": 212,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 136,
+          "right": 145,
+          "top": 195,
+          "bottom": 209,
+          "width": 10,
+          "height": 15,
+          "ink": 61
+        },
+        {
+          "left": 148,
+          "right": 152,
+          "top": 195,
+          "bottom": 208,
+          "width": 5,
+          "height": 14,
+          "ink": 19
+        },
+        {
+          "left": 154,
+          "right": 163,
+          "top": 195,
+          "bottom": 209,
+          "width": 10,
+          "height": 15,
+          "ink": 61
+        },
+        {
+          "left": 185,
+          "right": 189,
+          "top": 192,
+          "bottom": 210,
+          "width": 5,
+          "height": 19,
+          "ink": 63
+        },
+        {
+          "left": 194,
+          "right": 198,
+          "top": 193,
+          "bottom": 210,
+          "width": 5,
+          "height": 18,
+          "ink": 49
+        },
+        {
+          "left": 200,
+          "right": 210,
+          "top": 193,
+          "bottom": 210,
+          "width": 11,
+          "height": 18,
+          "ink": 120
+        },
+        {
+          "left": 215,
+          "right": 220,
+          "top": 193,
+          "bottom": 210,
+          "width": 6,
+          "height": 18,
+          "ink": 57
+        },
+        {
+          "left": 222,
+          "right": 231,
+          "top": 193,
+          "bottom": 210,
+          "width": 10,
+          "height": 18,
+          "ink": 101
+        },
+        {
+          "left": 236,
+          "right": 240,
+          "top": 192,
+          "bottom": 210,
+          "width": 5,
+          "height": 19,
+          "ink": 60
+        },
+        {
+          "left": 257,
+          "right": 274,
+          "top": 193,
+          "bottom": 210,
+          "width": 18,
+          "height": 18,
+          "ink": 164
+        },
+        {
+          "left": 278,
+          "right": 295,
+          "top": 193,
+          "bottom": 210,
+          "width": 18,
+          "height": 18,
+          "ink": 117
+        },
+        {
+          "left": 299,
+          "right": 316,
+          "top": 194,
+          "bottom": 210,
+          "width": 18,
+          "height": 17,
+          "ink": 80
+        }
+      ]
+    },
+    {
+      "row": 6,
+      "bandTop": 224,
+      "bandBottom": 240,
+      "inkThreshold": 191.89,
+      "background": 119.25,
+      "glyphCount": 13,
+      "glyphs": [
+        {
+          "left": 40,
+          "right": 58,
+          "top": 222,
+          "bottom": 240,
+          "width": 19,
+          "height": 19,
+          "ink": 154
+        },
+        {
+          "left": 61,
+          "right": 79,
+          "top": 223,
+          "bottom": 240,
+          "width": 19,
+          "height": 18,
+          "ink": 139
+        },
+        {
+          "left": 83,
+          "right": 100,
+          "top": 223,
+          "bottom": 240,
+          "width": 18,
+          "height": 18,
+          "ink": 158
+        },
+        {
+          "left": 104,
+          "right": 120,
+          "top": 223,
+          "bottom": 240,
+          "width": 17,
+          "height": 18,
+          "ink": 106
+        },
+        {
+          "left": 125,
+          "right": 141,
+          "top": 223,
+          "bottom": 240,
+          "width": 17,
+          "height": 18,
+          "ink": 116
+        },
+        {
+          "left": 147,
+          "right": 163,
+          "top": 223,
+          "bottom": 240,
+          "width": 17,
+          "height": 18,
+          "ink": 145
+        },
+        {
+          "left": 173,
+          "right": 176,
+          "top": 225,
+          "bottom": 242,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 179,
+          "right": 191,
+          "top": 225,
+          "bottom": 239,
+          "width": 13,
+          "height": 15,
+          "ink": 83
+        },
+        {
+          "left": 193,
+          "right": 196,
+          "top": 225,
+          "bottom": 242,
+          "width": 4,
+          "height": 18,
+          "ink": 40
+        },
+        {
+          "left": 205,
+          "right": 208,
+          "top": 230,
+          "bottom": 237,
+          "width": 4,
+          "height": 8,
+          "ink": 14
+        },
+        {
+          "left": 210,
+          "right": 223,
+          "top": 224,
+          "bottom": 240,
+          "width": 14,
+          "height": 17,
+          "ink": 65
+        },
+        {
+          "left": 226,
+          "right": 243,
+          "top": 223,
+          "bottom": 240,
+          "width": 18,
+          "height": 18,
+          "ink": 127
+        },
+        {
+          "left": 248,
+          "right": 265,
+          "top": 223,
+          "bottom": 240,
+          "width": 18,
+          "height": 18,
+          "ink": 126
+        }
+      ]
+    },
+    {
+      "row": 7,
+      "bandTop": 256,
+      "bandBottom": 269,
+      "inkThreshold": 190.85,
+      "background": 114.2,
+      "glyphCount": 9,
+      "glyphs": [
+        {
+          "left": 40,
+          "right": 58,
+          "top": 254,
+          "bottom": 270,
+          "width": 19,
+          "height": 17,
+          "ink": 106
+        },
+        {
+          "left": 63,
+          "right": 79,
+          "top": 254,
+          "bottom": 270,
+          "width": 17,
+          "height": 17,
+          "ink": 144
+        },
+        {
+          "left": 83,
+          "right": 99,
+          "top": 254,
+          "bottom": 270,
+          "width": 17,
+          "height": 17,
+          "ink": 155
+        },
+        {
+          "left": 110,
+          "right": 113,
+          "top": 255,
+          "bottom": 271,
+          "width": 4,
+          "height": 17,
+          "ink": 36
+        },
+        {
+          "left": 116,
+          "right": 128,
+          "top": 255,
+          "bottom": 269,
+          "width": 13,
+          "height": 15,
+          "ink": 83
+        },
+        {
+          "left": 130,
+          "right": 133,
+          "top": 255,
+          "bottom": 271,
+          "width": 4,
+          "height": 17,
+          "ink": 36
+        },
+        {
+          "left": 143,
+          "right": 160,
+          "top": 254,
+          "bottom": 270,
+          "width": 18,
+          "height": 17,
+          "ink": 148
+        },
+        {
+          "left": 163,
+          "right": 181,
+          "top": 254,
+          "bottom": 270,
+          "width": 19,
+          "height": 17,
+          "ink": 145
+        },
+        {
+          "left": 185,
+          "right": 201,
+          "top": 254,
+          "bottom": 269,
+          "width": 17,
+          "height": 16,
+          "ink": 124
+        }
+      ]
+    },
+    {
+      "row": 8,
+      "bandTop": 284,
+      "bandBottom": 299,
+      "inkThreshold": 191.85,
+      "background": 119.52,
+      "glyphCount": 16,
+      "glyphs": [
+        {
+          "left": 46,
+          "right": 64,
+          "top": 283,
+          "bottom": 300,
+          "width": 19,
+          "height": 18,
+          "ink": 132
+        },
+        {
+          "left": 68,
+          "right": 84,
+          "top": 283,
+          "bottom": 300,
+          "width": 17,
+          "height": 18,
+          "ink": 145
+        },
+        {
+          "left": 89,
+          "right": 105,
+          "top": 283,
+          "bottom": 300,
+          "width": 17,
+          "height": 18,
+          "ink": 76
+        },
+        {
+          "left": 110,
+          "right": 126,
+          "top": 283,
+          "bottom": 300,
+          "width": 17,
+          "height": 18,
+          "ink": 141
+        },
+        {
+          "left": 137,
+          "right": 140,
+          "top": 285,
+          "bottom": 301,
+          "width": 4,
+          "height": 17,
+          "ink": 36
+        },
+        {
+          "left": 143,
+          "right": 155,
+          "top": 285,
+          "bottom": 299,
+          "width": 13,
+          "height": 15,
+          "ink": 83
+        },
+        {
+          "left": 157,
+          "right": 160,
+          "top": 285,
+          "bottom": 301,
+          "width": 4,
+          "height": 17,
+          "ink": 36
+        },
+        {
+          "left": 169,
+          "right": 186,
+          "top": 284,
+          "bottom": 300,
+          "width": 18,
+          "height": 17,
+          "ink": 142
+        },
+        {
+          "left": 191,
+          "right": 206,
+          "top": 283,
+          "bottom": 300,
+          "width": 16,
+          "height": 18,
+          "ink": 78
+        },
+        {
+          "left": 211,
+          "right": 220,
+          "top": 285,
+          "bottom": 299,
+          "width": 10,
+          "height": 15,
+          "ink": 67
+        },
+        {
+          "left": 223,
+          "right": 232,
+          "top": 285,
+          "bottom": 299,
+          "width": 10,
+          "height": 15,
+          "ink": 44
+        },
+        {
+          "left": 235,
+          "right": 244,
+          "top": 285,
+          "bottom": 298,
+          "width": 10,
+          "height": 14,
+          "ink": 57
+        },
+        {
+          "left": 247,
+          "right": 256,
+          "top": 285,
+          "bottom": 298,
+          "width": 10,
+          "height": 14,
+          "ink": 57
+        },
+        {
+          "left": 259,
+          "right": 268,
+          "top": 285,
+          "bottom": 299,
+          "width": 10,
+          "height": 15,
+          "ink": 56
+        },
+        {
+          "left": 273,
+          "right": 277,
+          "top": 285,
+          "bottom": 299,
+          "width": 5,
+          "height": 15,
+          "ink": 36
+        },
+        {
+          "left": 283,
+          "right": 287,
+          "top": 285,
+          "bottom": 299,
+          "width": 5,
+          "height": 15,
+          "ink": 36
+        }
+      ]
+    },
+    {
+      "row": 9,
+      "bandTop": 316,
+      "bandBottom": 329,
+      "inkThreshold": 187.95,
+      "background": 116.89,
+      "glyphCount": 10,
+      "glyphs": [
+        {
+          "left": 40,
+          "right": 58,
+          "top": 314,
+          "bottom": 330,
+          "width": 19,
+          "height": 17,
+          "ink": 109
+        },
+        {
+          "left": 63,
+          "right": 79,
+          "top": 314,
+          "bottom": 330,
+          "width": 17,
+          "height": 17,
+          "ink": 146
+        },
+        {
+          "left": 82,
+          "right": 99,
+          "top": 314,
+          "bottom": 330,
+          "width": 18,
+          "height": 17,
+          "ink": 158
+        },
+        {
+          "left": 110,
+          "right": 113,
+          "top": 315,
+          "bottom": 331,
+          "width": 4,
+          "height": 17,
+          "ink": 36
+        },
+        {
+          "left": 116,
+          "right": 128,
+          "top": 315,
+          "bottom": 329,
+          "width": 13,
+          "height": 15,
+          "ink": 84
+        },
+        {
+          "left": 130,
+          "right": 133,
+          "top": 315,
+          "bottom": 331,
+          "width": 4,
+          "height": 17,
+          "ink": 36
+        },
+        {
+          "left": 143,
+          "right": 159,
+          "top": 314,
+          "bottom": 330,
+          "width": 17,
+          "height": 17,
+          "ink": 137
+        },
+        {
+          "left": 164,
+          "right": 180,
+          "top": 314,
+          "bottom": 330,
+          "width": 17,
+          "height": 17,
+          "ink": 137
+        },
+        {
+          "left": 185,
+          "right": 201,
+          "top": 314,
+          "bottom": 330,
+          "width": 17,
+          "height": 17,
+          "ink": 158
+        },
+        {
+          "left": 205,
+          "right": 222,
+          "top": 314,
+          "bottom": 330,
+          "width": 18,
+          "height": 17,
+          "ink": 138
+        }
+      ]
+    },
+    {
+      "row": 10,
+      "bandTop": 345,
+      "bandBottom": 360,
+      "inkThreshold": 188.92,
+      "background": 114.99,
+      "glyphCount": 11,
+      "glyphs": [
+        {
+          "left": 41,
+          "right": 58,
+          "top": 343,
+          "bottom": 360,
+          "width": 18,
+          "height": 18,
+          "ink": 153
+        },
+        {
+          "left": 62,
+          "right": 79,
+          "top": 343,
+          "bottom": 360,
+          "width": 18,
+          "height": 18,
+          "ink": 96
+        },
+        {
+          "left": 82,
+          "right": 100,
+          "top": 343,
+          "bottom": 360,
+          "width": 19,
+          "height": 18,
+          "ink": 146
+        },
+        {
+          "left": 110,
+          "right": 113,
+          "top": 345,
+          "bottom": 362,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 116,
+          "right": 128,
+          "top": 345,
+          "bottom": 359,
+          "width": 13,
+          "height": 15,
+          "ink": 84
+        },
+        {
+          "left": 130,
+          "right": 133,
+          "top": 345,
+          "bottom": 362,
+          "width": 4,
+          "height": 18,
+          "ink": 40
+        },
+        {
+          "left": 143,
+          "right": 159,
+          "top": 343,
+          "bottom": 360,
+          "width": 17,
+          "height": 18,
+          "ink": 143
+        },
+        {
+          "left": 164,
+          "right": 181,
+          "top": 343,
+          "bottom": 360,
+          "width": 18,
+          "height": 18,
+          "ink": 141
+        },
+        {
+          "left": 184,
+          "right": 202,
+          "top": 351,
+          "bottom": 352,
+          "width": 19,
+          "height": 2,
+          "ink": 36
+        },
+        {
+          "left": 205,
+          "right": 223,
+          "top": 343,
+          "bottom": 360,
+          "width": 19,
+          "height": 18,
+          "ink": 180
+        },
+        {
+          "left": 226,
+          "right": 235,
+          "top": 349,
+          "bottom": 359,
+          "width": 10,
+          "height": 11,
+          "ink": 62
+        }
+      ]
+    },
+    {
+      "row": 11,
+      "bandTop": 374,
+      "bandBottom": 390,
+      "inkThreshold": 186.99,
+      "background": 116.67,
+      "glyphCount": 13,
+      "glyphs": [
+        {
+          "left": 40,
+          "right": 57,
+          "top": 372,
+          "bottom": 390,
+          "width": 18,
+          "height": 19,
+          "ink": 189
+        },
+        {
+          "left": 62,
+          "right": 79,
+          "top": 373,
+          "bottom": 390,
+          "width": 18,
+          "height": 18,
+          "ink": 158
+        },
+        {
+          "left": 83,
+          "right": 100,
+          "top": 373,
+          "bottom": 390,
+          "width": 18,
+          "height": 18,
+          "ink": 136
+        },
+        {
+          "left": 103,
+          "right": 121,
+          "top": 373,
+          "bottom": 390,
+          "width": 19,
+          "height": 18,
+          "ink": 89
+        },
+        {
+          "left": 125,
+          "right": 142,
+          "top": 373,
+          "bottom": 390,
+          "width": 18,
+          "height": 18,
+          "ink": 99
+        },
+        {
+          "left": 152,
+          "right": 155,
+          "top": 375,
+          "bottom": 392,
+          "width": 4,
+          "height": 18,
+          "ink": 39
+        },
+        {
+          "left": 158,
+          "right": 170,
+          "top": 375,
+          "bottom": 389,
+          "width": 13,
+          "height": 15,
+          "ink": 85
+        },
+        {
+          "left": 172,
+          "right": 175,
+          "top": 375,
+          "bottom": 392,
+          "width": 4,
+          "height": 18,
+          "ink": 40
+        },
+        {
+          "left": 184,
+          "right": 187,
+          "top": 380,
+          "bottom": 387,
+          "width": 4,
+          "height": 8,
+          "ink": 15
+        },
+        {
+          "left": 189,
+          "right": 202,
+          "top": 373,
+          "bottom": 390,
+          "width": 14,
+          "height": 18,
+          "ink": 70
+        },
+        {
+          "left": 206,
+          "right": 223,
+          "top": 373,
+          "bottom": 390,
+          "width": 18,
+          "height": 18,
+          "ink": 122
+        },
+        {
+          "left": 227,
+          "right": 243,
+          "top": 373,
+          "bottom": 390,
+          "width": 17,
+          "height": 18,
+          "ink": 146
+        },
+        {
+          "left": 248,
+          "right": 265,
+          "top": 373,
+          "bottom": 390,
+          "width": 18,
+          "height": 18,
+          "ink": 148
+        }
+      ]
+    }
+  ],
+  "totalGlyphs": 168
+}
