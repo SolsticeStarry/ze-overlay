@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <RootNamespace>ZeOverlay.Tools.ScenarioViz</RootNamespace>
+    <AssemblyName>ScenarioViz</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ZeOverlay.Infrastructure\ZeOverlay.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\ZeOverlay.Stage.Parsing\ZeOverlay.Stage.Parsing.csproj" />
+    <ProjectReference Include="..\..\src\ZeOverlay.Stage.Tracking\ZeOverlay.Stage.Tracking.csproj" />
+    <ProjectReference Include="..\..\src\ZeOverlay.Stage.Matching\ZeOverlay.Stage.Matching.csproj" />
+  </ItemGroup>
+
+  <!-- 直接复用测试里的假 HUD 模拟器，保证可视化与单测跑的是同一段逻辑 -->
+  <ItemGroup>
+    <Compile Include="..\..\tests\ZeOverlay.Tests\Scenarios\ServerSimulator.cs" Link="ServerSimulator.cs" />
+    <Compile Include="..\..\tests\ZeOverlay.Tests\Scenarios\RandomizedServerSimulation.cs" Link="RandomizedServerSimulation.cs" />
+  </ItemGroup>
+
+</Project>

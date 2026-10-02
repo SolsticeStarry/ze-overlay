@@ -10,7 +10,8 @@ public sealed class OverlaySortTests
         string name,
         ArtifactState state = ArtifactState.Ready,
         int? cooldown = null,
-        EntrySource source = EntrySource.Live)
+        EntrySource source = EntrySource.Live,
+        int? serverIndex = null)
         => new(
             page,
             slot,
@@ -22,7 +23,9 @@ public sealed class OverlaySortTests
             source,
             DateTimeOffset.UnixEpoch,
             DateTimeOffset.UnixEpoch,
-            0);
+            0,
+            string.Empty,
+            serverIndex);
 
     private static readonly IReadOnlyDictionary<string, int> EmptyRanks =
         new Dictionary<string, int>(StringComparer.Ordinal);
@@ -144,5 +147,36 @@ public sealed class OverlaySortTests
         var ordered = OverlaySort.Apply([entry], OverlaySortMode.Watchlist, ranks, _ => "标准名");
 
         Assert.Single(ordered);
+    }
+
+    [Fact]
+    public void Watchlist_SameNameMultiples_OrderByServerIndex_NotChurningSlot()
+    {
+        // 连写服回流会把 爆闪1/爆闪2 的行位互换；显示顺序必须仍按标号 1、2，不能跟着行位跳。
+        var ranks = new Dictionary<string, int>(StringComparer.Ordinal) { ["爆闪"] = 0 };
+
+        var entries = new[]
+        {
+            Entry(VisiblePage.Page1, 5, "爆闪", serverIndex: 2),
+            Entry(VisiblePage.Page1, 3, "爆闪", serverIndex: 1),
+        };
+
+        var ordered = OverlaySort.Apply(entries, OverlaySortMode.Watchlist, ranks, e => e.ArtifactName);
+
+        Assert.Equal(new int?[] { 1, 2 }, ordered.Select(e => e.ServerIndex));
+    }
+
+    [Fact]
+    public void Cooldown_SameNameMultiples_OrderByServerIndex()
+    {
+        var entries = new[]
+        {
+            Entry(VisiblePage.Page1, 6, "手电", ArtifactState.Cooling, 10, serverIndex: 2),
+            Entry(VisiblePage.Page1, 2, "手电", ArtifactState.Cooling, 10, serverIndex: 1),
+        };
+
+        var ordered = OverlaySort.Apply(entries, OverlaySortMode.Cooldown, EmptyRanks, NameOf);
+
+        Assert.Equal(new int?[] { 1, 2 }, ordered.Select(e => e.ServerIndex));
     }
 }
