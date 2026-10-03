@@ -37,6 +37,20 @@ public sealed class Tracker
 
         public CooldownVote CooldownHistory { get; } = new();
 
+        /// <summary>「连续多帧一致的读花」候选值，用于把卡住的错值纠正回真值。</summary>
+        public int? PendingCooldown { get; set; }
+
+        public int PendingCount { get; set; }
+
+        public DateTimeOffset PendingAt { get; set; } = DateTimeOffset.MinValue;
+
+        public void ClearPending()
+        {
+            PendingCooldown = null;
+            PendingCount = 0;
+            PendingAt = DateTimeOffset.MinValue;
+        }
+
         public int? UsesRemaining { get; set; }
 
         public int? UsesTotal { get; set; }
@@ -130,6 +144,15 @@ public sealed class Tracker
     private readonly TrackerOptions _options;
     private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
     private int _baselineRows;
+
+    /// <summary>
+    /// 冷却秒数的合理上限：超过它基本是 OCR 把开括号/相邻字符读成了数字（实测 `[49]`→`849`）。
+    /// 这类量级不合理的读数一律不采纳。
+    /// </summary>
+    private const int MaxPlausibleCooldownSeconds = 300;
+
+    /// <summary>「连续读花」候选两次之间允许的最大间隔（秒）；超过就不算连续，重新计数。</summary>
+    private const double PendingConfirmMaxGapSeconds = 2.0;
 
     public Tracker(TrackerOptions? options = null)
     {
@@ -255,11 +278,17 @@ public sealed class Tracker
                     || previousCooldown is null
                     || previousCooldown <= 1;
 
-                bool plausible = resetContext
-                    || (newCooldown <= previousCooldown + 1 && newCooldown >= previousCooldown - 2);
+                // 量级是否合理：超过上限（默认 300s）基本是 OCR 把开括号/相邻字符读成了数字
+                // （实测 `[49]` 被读成 `849`）。量级不合理的读数一律不采纳。
+                bool withinBounds = newCooldown <= MaxPlausibleCooldownSeconds;
+                bool plausible = withinBounds
+                    && (resetContext
+                        || (newCooldown <= previousCooldown + 1 && newCooldown >= previousCooldown - 2));
 
                 if (plausible)
                 {
+                    entry.ClearPending();
+
                     if (resetContext)
                     {
                         entry.CooldownHistory.Clear();
@@ -271,16 +300,50 @@ public sealed class Tracker
                     // 否则用最新读数，保证与 HUD 同步。
                     entry.CooldownAtObservation = entry.CooldownHistory.Vote(now, newCooldown);
                 }
+                else if (withinBounds)
+                {
+                    // 量级合理但与外推值差很多（掉太多/升太多）。若这种读数**连续多帧一致**，
+                    // 更可能是「之前某一帧读花把值带偏、现在一直读回真值」⇒ 达到 2 次就纠正，
+                    // 避免卡在错值上长时间不恢复。
+                    bool recovered = false;
+                    if (entry.PendingCooldown is { } pending
+                        && Math.Abs(newCooldown - pending) <= 2
+                        && (now - entry.PendingAt).TotalSeconds <= PendingConfirmMaxGapSeconds)
+                    {
+                        entry.PendingCount++;
+                        entry.PendingAt = now;
+                        if (entry.PendingCount >= 2)
+                        {
+                            recovered = true;
+                            entry.ClearPending();
+                            entry.CooldownHistory.Clear();
+                            entry.CooldownHistory.Push(newCooldown, now);
+                            entry.CooldownAtObservation = newCooldown;
+                        }
+                    }
+                    else
+                    {
+                        entry.PendingCooldown = newCooldown;
+                        entry.PendingCount = 1;
+                        entry.PendingAt = now;
+                    }
+
+                    if (!recovered)
+                    {
+                        entry.CooldownAtObservation = previousCooldown;
+                    }
+                }
                 else
                 {
-                    // 读花的一次不进入历史，沿用外推（与旧行为一致，避免把显示值带偏）。
-                    entry.CooldownAtObservation = previousCooldown ?? newCooldown;
+                    // 量级不合理的读花（如 849）：不采纳、也不进「连续纠正」候选，沿用外推。
+                    entry.CooldownAtObservation = previousCooldown;
                 }
             }
             else
             {
                 entry.CooldownAtObservation = null;
                 entry.CooldownHistory.Clear();
+                entry.ClearPending();
             }
 
             if (!sameArtifact || row.UsesRemaining is not null || row.UsesTotal is not null)

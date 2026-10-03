@@ -127,4 +127,34 @@ public sealed class CoolingAntiJumpTests
 
         Assert.Equal(30, tracker.Snapshot(T0.AddSeconds(3)).Single().CooldownSeconds);
     }
+
+    [Fact]
+    public void LeadingDigitMisread_IsNotAdopted()
+    {
+        var tracker = new Tracker();
+
+        // `[49]` 前面无端多出一个 8 ⇒ 849：量级不合理（>300），不采纳（新条目还没有可信值）。
+        tracker.Observe(12, [Cooling("滋水枪", 849)], T0);
+        Assert.Null(tracker.Snapshot(T0).Single().CooldownSeconds);
+
+        // 下一帧读回真值 49 ⇒ 正常采纳。
+        tracker.Observe(12, [Cooling("滋水枪", 49)], T0.AddSeconds(1));
+        Assert.Equal(49, tracker.Snapshot(T0.AddSeconds(1)).Single().CooldownSeconds);
+    }
+
+    [Fact]
+    public void StuckWrongValue_RecoversAfterTwoConsistentReads()
+    {
+        var tracker = new Tracker();
+
+        // 量级在界内但仍是读花的错值（249）会被采纳——此时靠"连续一致"纠正。
+        tracker.Observe(12, [Cooling("滋水枪", 249)], T0);
+        Assert.Equal(249, tracker.Snapshot(T0).Single().CooldownSeconds);
+
+        // 之后连续两帧读回真值 48/47：第一次只作候选，第二次一致 ⇒ 纠正（否则会卡在 249 十几分钟）。
+        tracker.Observe(12, [Cooling("滋水枪", 48)], T0.AddSeconds(1));
+        tracker.Observe(12, [Cooling("滋水枪", 47)], T0.AddSeconds(2));
+
+        Assert.Equal(47, tracker.Snapshot(T0.AddSeconds(2)).Single().CooldownSeconds);
+    }
 }
