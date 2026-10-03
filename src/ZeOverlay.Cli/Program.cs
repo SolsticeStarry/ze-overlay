@@ -26,8 +26,8 @@ internal static class Program
           --capture-once [--frames N] [--delay MS]        采集自检（退出码 0/2/3）
           --analyze-image <png> [--roi x,y,w,h] [--glyphs]  行剖分 / 字形切分
           --ocr <png> [--roi ...]                         系统 OCR 原始行
-          --recognize <png> [--roi ...] [--ppocr] [--parser bracket|plain]  完整识别链路
-          --bench-ocr <png> [--roi ...] [--model <onnx>] [--threads N] [--repeat N]
+          --recognize <png> [--roi ...] [--ppocr] [--parser bracket|plain] [--model <onnx>] [--keys <txt>]  完整识别链路
+          --bench-ocr <png> [--roi ...] [--model <onnx>] [--keys <txt>] [--threads N] [--repeat N]
                             [--no-spin] [--ep cpu|dml] [--fixed-width N] [--batch N]
                             [--dml-device N] [--out <txt>]  识别耗时拆解
         """;
@@ -63,6 +63,7 @@ internal static class Program
         {
             string path = benchIndex + 1 < args.Length ? args[benchIndex + 1] : string.Empty;
             string? model = GetStringArg(args, "--model");
+            string? keys = GetStringArg(args, "--keys");
             int? threads = GetIntArg(args, "--threads");
             int repeat = ParseIntArg(args, "--repeat", 3);
             string? outFile = GetStringArg(args, "--out");
@@ -73,7 +74,7 @@ internal static class Program
             int dmlDevice = GetIntArg(args, "--dml-device") ?? 0;
             int fixedWidth = GetIntArg(args, "--fixed-width") ?? 0;
             int batch = GetIntArg(args, "--batch") ?? 1;
-            return BenchOcr.Run(path, roiText, model, threads, repeat, outFile, allowSpinning, provider, dmlDevice, fixedWidth, batch);
+            return BenchOcr.Run(path, roiText, model, keys, threads, repeat, outFile, allowSpinning, provider, dmlDevice, fixedWidth, batch);
         }
 
         int recognizeIndex = Array.FindIndex(args, a => a.Equals("--recognize", StringComparison.OrdinalIgnoreCase));
@@ -84,7 +85,9 @@ internal static class Program
             ParserMode parserMode = ProfileDefaults.ParseMode(GetStringArg(args, "--parser"));
             Paths cliPaths = Paths.ForExecutable();
             WatchlistConfig list = WatchlistStore.Load(cliPaths.WatchlistFile);
-            return RecognizeDump.Run(path, roiText, list.Names, list.MatchThreshold, usePpOcr, parserMode);
+            return RecognizeDump.Run(
+                path, roiText, list.Names, list.MatchThreshold, usePpOcr, parserMode,
+                GetStringArg(args, "--model"), GetStringArg(args, "--keys"));
         }
 
         int analyzeIndex = Array.FindIndex(args, a => a.Equals("--analyze-image", StringComparison.OrdinalIgnoreCase));

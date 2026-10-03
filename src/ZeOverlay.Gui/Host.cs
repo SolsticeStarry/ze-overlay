@@ -44,6 +44,8 @@ public sealed partial class Host : IDisposable
     private string _recognitionName = string.Empty;
     private TrackerOptions _trackerOptions = new();
     private Tracker _tracker = new();
+    private readonly object _trackerGate = new();
+    private System.Threading.Timer? _overlayTick;
     private readonly Dictionary<string, int> _recentNameCounts = new(StringComparer.Ordinal);
     private readonly object _recentNamesGate = new();
 
@@ -156,8 +158,13 @@ public sealed partial class Host : IDisposable
             + $"ROI={(string.IsNullOrWhiteSpace(_config.Roi.ScreenRect) ? "未标定" : _config.Roi.ScreenRect)}");
 
         // 优先用 PP-OCR（按行识别）；模型缺失或加载失败时回退系统 OCR。
-        string modelPath = Path.Combine(_paths.BaseDirectory, "models", "ch_PP-OCRv3_rec_infer.onnx");
-        string keysPath = Path.Combine(_paths.BaseDirectory, "models", "ppocr_keys_v1.txt");
+        // 模型在 v6 → v4 → v3 里自动挑第一个存在的（v3 读括号数字会吞位/加位，见 PpOcrModels）。
+        string modelsDirectory = Path.Combine(_paths.BaseDirectory, "models");
+        PpOcrModels.Resolved resolved = PpOcrModels.Resolve(
+            modelsDirectory, _config.Recognition.ModelFile, _config.Recognition.KeysFile);
+        string modelPath = resolved.ModelPath;
+        string keysPath = resolved.KeysPath;
+        string engineLabel = resolved.Label;
 
         if (File.Exists(modelPath) && File.Exists(keysPath))
         {
@@ -177,9 +184,10 @@ public sealed partial class Host : IDisposable
             try
             {
                 _ppOcr = new PpOcrEngine(modelPath, keysPath, threads, _config.Recognition.AllowSpinning,
-                    useDml ? OcrExecutionProvider.DirectML : OcrExecutionProvider.Cpu);
+                    useDml ? OcrExecutionProvider.DirectML : OcrExecutionProvider.Cpu, label: engineLabel);
                 _log?.Info(
-                    $"PP-OCR 已加载：{_ppOcr.Name}（按行识别，不需要检测模型；"
+                    $"PP-OCR 已加载：{_ppOcr.Name}（模型={Path.GetFileName(modelPath)} 字典={Path.GetFileName(keysPath)}；"
+                    + $"按行识别，不需要检测模型；"
                     + $"线程={(threads is { } t ? t.ToString(CultureInfo.InvariantCulture) : "自动")}；"
                     + $"自旋={(_config.Recognition.AllowSpinning ? "开" : "关")}；"
                     + $"固定宽度={(fixedWidth > 0 ? fixedWidth.ToString(CultureInfo.InvariantCulture) : "关")}；"
@@ -191,7 +199,7 @@ public sealed partial class Host : IDisposable
                 _log?.Warn($"DirectML 会话创建失败，回退 CPU EP：{ex.Message}");
                 try
                 {
-                    _ppOcr = new PpOcrEngine(modelPath, keysPath, threads, _config.Recognition.AllowSpinning, OcrExecutionProvider.Cpu);
+                    _ppOcr = new PpOcrEngine(modelPath, keysPath, threads, _config.Recognition.AllowSpinning, OcrExecutionProvider.Cpu, label: engineLabel);
                     fixedWidth = 0;
                     batchSize = 1;
                     _log?.Info($"PP-OCR 已回退 CPU：{_ppOcr.Name}");
@@ -263,6 +271,10 @@ public sealed partial class Host : IDisposable
 
         _log?.Info("启动完成；采集后端=" + _capture.Name + "；热键=" + DescribeHotkeys());
 
+        // 倒计时/叠加**独立刷新**：不等 OCR/采集节奏，按墙钟定期重建（纯外推，开销极小）。
+        // 这样即使 OCR 变慢或某帧没识别出来，倒计时也照常走、不会滞后。
+        _overlayTick = new System.Threading.Timer(_ => RefreshOverlayTick(), null, 200, 200);
+
         if (_selectRoiOnly)
         {
             // 「只做标定」模式：进入框选，确认或取消后立即退出。
@@ -293,6 +305,7 @@ public sealed partial class Host : IDisposable
         }
 
         _hotkeys?.Dispose();
+        _overlayTick?.Dispose();
         _overlay?.Close();
         _ppOcr?.Dispose();
         _ocr.Dispose();

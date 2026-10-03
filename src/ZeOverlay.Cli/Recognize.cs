@@ -37,7 +37,9 @@ internal static class RecognizeDump
         IReadOnlyList<string> watchlist,
         double threshold,
         bool usePpOcr = false,
-        ParserMode parserMode = ParserMode.Bracket)
+        ParserMode parserMode = ParserMode.Bracket,
+        string? modelFile = null,
+        string? keysFile = null)
     {
         if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
         {
@@ -82,16 +84,18 @@ internal static class RecognizeDump
         if (usePpOcr)
         {
             Paths paths = Paths.ForExecutable();
-            string modelPath = Path.Combine(paths.BaseDirectory, "models", "ch_PP-OCRv3_rec_infer.onnx");
-            string keysPath = Path.Combine(paths.BaseDirectory, "models", "ppocr_keys_v1.txt");
+            PpOcrModels.Resolved resolved = PpOcrModels.Resolve(
+                Path.Combine(paths.BaseDirectory, "models"), modelFile, keysFile);
+            string modelPath = resolved.ModelPath;
+            string keysPath = resolved.KeysPath;
 
             if (!File.Exists(modelPath) || !File.Exists(keysPath))
             {
-                File.WriteAllText(imagePath + ".rec.error.txt", $"找不到 PP-OCR 模型：{modelPath}");
+                File.WriteAllText(imagePath + ".rec.error.txt", $"找不到 PP-OCR 模型：{modelPath} | {keysPath}");
                 return 5;
             }
 
-            using var pp = new PpOcrEngine(modelPath, keysPath);
+            using var pp = new PpOcrEngine(modelPath, keysPath, label: resolved.Label);
             engineName = pp.Name;
 
             RowReport report = Analyzer.Analyze(target);

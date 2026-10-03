@@ -35,6 +35,8 @@ public sealed class Tracker
 
         public int? CooldownAtObservation { get; set; }
 
+        public CooldownVote CooldownHistory { get; } = new();
+
         public int? UsesRemaining { get; set; }
 
         public int? UsesTotal { get; set; }
@@ -50,6 +52,79 @@ public sealed class Tracker
         public DateTimeOffset LastMissAt { get; set; } = DateTimeOffset.MinValue;
 
         public string Display => $"{ArtifactName} (第{(int)Page}页 #{Slot})";
+    }
+
+    /// <summary>
+    /// 单个条目最近 <see cref="CooldownVote.Window"/> 次「可信」冷却读数（值 + 观测时刻）。
+    /// 冷却值采用**多帧投票**：显示值为这些读数按当前时刻外推后的中位数，
+    /// 从而让单帧读丢/读多（`[15]`→`5`、`[52]`→`[521]`）被邻帧投掉。
+    /// </summary>
+    private sealed class CooldownVote
+    {
+        public const int Window = 3;
+
+        private readonly List<(int Value, DateTimeOffset At)> _reads = new(Window);
+
+        public void Clear() => _reads.Clear();
+
+        public void Push(int value, DateTimeOffset at)
+        {
+            _reads.Add((value, at));
+            if (_reads.Count > Window)
+            {
+                _reads.RemoveAt(0);
+            }
+        }
+
+        /// <summary>
+        /// 当前应采用的冷却值：少于 <see cref="Window"/> 次读数时取最新读数（外推到 now）；
+        /// 达到窗口后，只有**最新读数明显偏离中位数（≥2）**才判为单帧读花、改用中位数，
+        /// 否则一律用最新读数——保证与 HUD 精确同步，不做平滑滞后。
+        /// 历史为空时回退 <paramref name="fallback"/>。
+        /// </summary>
+        public int Vote(DateTimeOffset now, int fallback)
+        {
+            if (_reads.Count == 0)
+            {
+                return fallback;
+            }
+
+            int latest = Project(_reads[^1], now);
+            if (_reads.Count < Window)
+            {
+                return latest;
+            }
+
+            int median = Median3(
+                Project(_reads[0], now),
+                Project(_reads[1], now),
+                Project(_reads[2], now));
+
+            return Math.Abs(latest - median) >= 2 ? median : latest;
+        }
+
+        private static int Project((int Value, DateTimeOffset At) read, DateTimeOffset now)
+            => Math.Max(0, (int)Math.Ceiling(read.Value - (now - read.At).TotalSeconds));
+
+        private static int Median3(int a, int b, int c)
+        {
+            if (a > b)
+            {
+                (a, b) = (b, a);
+            }
+
+            if (b > c)
+            {
+                (b, c) = (c, b);
+            }
+
+            if (a > b)
+            {
+                (a, b) = (b, a);
+            }
+
+            return b;
+        }
     }
 
     private readonly TrackerOptions _options;
@@ -169,26 +244,43 @@ public sealed class Tracker
             {
                 int newCooldown = Math.Max(0, row.CooldownSeconds ?? 0);
 
-                // 冷却只会往下走。同一神器上读数突然远大于外推值，多半是 OCR 把小数读丢
-                // （`3.5s` → `35s`）或读花；直接采纳会让倒计时乱跳 ⇒ 忽略这次尖峰，沿用外推。
-                //
-                // 例外：外推值已接近 0（冷却基本走完）时的**再次使用**会给出一个新的长冷却，
-                // 这是合法重置，必须接受，否则会一直卡在"就绪"（1Hz 采样可能看不到中间的 R 帧）。
-                // 例外1：上一帧没连续观测到（中间有间断）⇒ 可能是"新一件复用了同一身份"或"再次使用"，
-                //        无法用"只降不升"判断，直接采信读数。
-                // 例外2：外推值已接近 0（冷却基本走完）时的再次使用也会给出新的长冷却，是合法重置。
-                bool plausible = entry.Source != EntrySource.Live
+                // 「可信」判据（在加入投票历史之前先过滤读花）：
+                // - **只降不升**：读数远大于外推值 ⇒ OCR 把小数读丢（`3.5s`→`35s`）；
+                // - **不能一次掉太多**：读数远小于外推值 ⇒ 多半是**十位被读丢**（`[15]` 的 `[1`
+                //   被读成 `门`，只剩 `5`）。
+                // 例外（合法重置，直接采信并清空历史）：上一帧有间断、换了一件、外推已≈0（再次使用）。
+                bool resetContext = entry.Source != EntrySource.Live
                     || !wasCooling
                     || !sameArtifact
-                    || previousCooldown is not { } previous
-                    || previous <= 1
-                    || newCooldown <= previous + 1;
+                    || previousCooldown is null
+                    || previousCooldown <= 1;
 
-                entry.CooldownAtObservation = plausible ? newCooldown : previousCooldown;
+                bool plausible = resetContext
+                    || (newCooldown <= previousCooldown + 1 && newCooldown >= previousCooldown - 2);
+
+                if (plausible)
+                {
+                    if (resetContext)
+                    {
+                        entry.CooldownHistory.Clear();
+                    }
+
+                    entry.CooldownHistory.Push(newCooldown, now);
+
+                    // 多帧投票：最新读数与近几帧中位数明显不符（≥2）时判为单帧读花，改用中位数；
+                    // 否则用最新读数，保证与 HUD 同步。
+                    entry.CooldownAtObservation = entry.CooldownHistory.Vote(now, newCooldown);
+                }
+                else
+                {
+                    // 读花的一次不进入历史，沿用外推（与旧行为一致，避免把显示值带偏）。
+                    entry.CooldownAtObservation = previousCooldown ?? newCooldown;
+                }
             }
             else
             {
                 entry.CooldownAtObservation = null;
+                entry.CooldownHistory.Clear();
             }
 
             if (!sameArtifact || row.UsesRemaining is not null || row.UsesTotal is not null)

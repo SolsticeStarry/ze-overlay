@@ -61,4 +61,70 @@ public sealed class CoolingAntiJumpTests
 
         Assert.Equal(30, tracker.Snapshot(T0.AddSeconds(1)).Single().CooldownSeconds);
     }
+
+    [Fact]
+    public void ImplausibleDrop_DroppedTensDigit_IsIgnored()
+    {
+        var tracker = new Tracker();
+        tracker.Observe(12, [Cooling("滋水枪", 15)], T0);
+
+        // 下一秒读数变成 5：`[15]` 的十位被 OCR 读丢（`[1` 被读成 `门`）⇒ 一次掉 10s 不可能，
+        // 应沿用外推（≈14），不能把两位数显示成个位数。
+        tracker.Observe(12, [Cooling("滋水枪", 5)], T0.AddSeconds(1));
+
+        int? shown = tracker.Snapshot(T0.AddSeconds(1)).Single().CooldownSeconds;
+        Assert.InRange(shown ?? -1, 13, 14);
+    }
+
+    [Fact]
+    public void PlausibleGradualDecrease_IsAccepted()
+    {
+        var tracker = new Tracker();
+        tracker.Observe(12, [Cooling("滋水枪", 15)], T0);
+        tracker.Observe(12, [Cooling("滋水枪", 14)], T0.AddSeconds(1));
+
+        Assert.Equal(14, tracker.Snapshot(T0.AddSeconds(1)).Single().CooldownSeconds);
+    }
+
+    [Fact]
+    public void CooldownVote_SmoothsWithinToleranceLowRead()
+    {
+        var tracker = new Tracker();
+        tracker.Observe(12, [Cooling("滋水枪", 20)], T0);
+        tracker.Observe(12, [Cooling("滋水枪", 19)], T0.AddSeconds(1));
+
+        // 第三帧读到 16：在防跳变容差内（外推 18，容许 16..19）⇒ 会进历史；
+        // 但多帧投票把 16 判为单帧读花：三次读数外推到当前 = 18/18/16 ⇒ 中位 18。
+        tracker.Observe(12, [Cooling("滋水枪", 16)], T0.AddSeconds(2));
+
+        Assert.Equal(18, tracker.Snapshot(T0.AddSeconds(2)).Single().CooldownSeconds);
+    }
+
+    [Fact]
+    public void CooldownVote_OutvotedBlip_KeepsTrend()
+    {
+        var tracker = new Tracker();
+        tracker.Observe(12, [Cooling("滋水枪", 30)], T0);
+        tracker.Observe(12, [Cooling("滋水枪", 29)], T0.AddSeconds(1));
+        tracker.Observe(12, [Cooling("滋水枪", 28)], T0.AddSeconds(2));
+
+        // 第 4 帧低读 25（外推 27，容差内）⇒ 三次窗口为 29/28/25 → 中位 27，而不是 25。
+        tracker.Observe(12, [Cooling("滋水枪", 25)], T0.AddSeconds(3));
+
+        Assert.Equal(27, tracker.Snapshot(T0.AddSeconds(3)).Single().CooldownSeconds);
+    }
+
+    [Fact]
+    public void CooldownVote_ClearedOnReset()
+    {
+        var tracker = new Tracker();
+        tracker.Observe(12, [Cooling("滋水枪", 60)], T0);
+        tracker.Observe(12, [Cooling("滋水枪", 59)], T0.AddSeconds(1));
+
+        // 就绪 ⇒ 清空投票历史；随后再次进入冷却应直接采信新值，不被旧的长冷却拖住。
+        tracker.Observe(12, [new ObservedRow(0, "滋水枪", ArtifactState.Ready)], T0.AddSeconds(2));
+        tracker.Observe(12, [Cooling("滋水枪", 30)], T0.AddSeconds(3));
+
+        Assert.Equal(30, tracker.Snapshot(T0.AddSeconds(3)).Single().CooldownSeconds);
+    }
 }

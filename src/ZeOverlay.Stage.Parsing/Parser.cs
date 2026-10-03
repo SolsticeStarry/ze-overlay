@@ -49,7 +49,87 @@ public static class Parser
         // 关键：这里**不带**裸状态兜底——否则社区服连写行（`人闪1…`）会被本服解析器
         // 把标号数字误当冷却，必须让它落到 Plain 分支。
         ParsedRow? bracket = ParseBracket(rawText, allowBareFallback: false);
-        return bracket ?? ParsePlain(rawText, vocabulary);
+        if (bracket is not null)
+        {
+            return bracket;
+        }
+
+        ParsedRow? plain = ParsePlain(rawText, vocabulary);
+        if (plain is not null)
+        {
+            return plain;
+        }
+
+        // 最后兜底：本服行**整段丢了方括号**（实机亮底：`袋装火盐门3小小猪头`、`爆闪相机4…`）。
+        // 但**仅当这行不以「连写服状态」结尾**时才试——否则会误吃连写行
+        // （`优火盐1…就绪` 的 `1` 会被当冷却），也会破坏 Plain 的名表过滤。
+        if (HasPlainStatus(rawText))
+        {
+            return null;
+        }
+
+        return ParseBracket(rawText, allowBareFallback: true);
+    }
+
+    /// <summary>该行是否以「连写服状态」结尾（`就绪` / `∞`（含被读成单个 0/8）/ `NNs` / `n/m`）。</summary>
+    private static bool HasPlainStatus(string? rawText)
+    {
+        if (string.IsNullOrWhiteSpace(rawText))
+        {
+            return false;
+        }
+
+        string text = NormalizeFullWidth(StripWhitespace(rawText));
+        TryParsePlainStatus(text, out ArtifactState state, out _, out _, out _, out _);
+        return state != ArtifactState.Unknown;
+    }
+
+    /// <summary>
+    /// 把识别到的名字按**名表**纠错（取最相近的名表项）。用于修 `袋装火盐门`→`袋装火盐`、
+    /// `装杏仁水`→`桶装杏仁水` 这类近义读花，让名单匹配/展示用标准写法（否则 0.85 阈值不认、条目像"消失"）。
+    /// 名表为空、或不够像（&lt; threshold）、或前两名太接近（差 &lt; margin）时**原样返回**。
+    /// </summary>
+    public static string CanonicalizeName(
+        string name,
+        IReadOnlyList<string>? vocabulary,
+        double threshold = 0.74,
+        double margin = 0.05)
+    {
+        if (string.IsNullOrWhiteSpace(name) || vocabulary is null || vocabulary.Count == 0)
+        {
+            return name;
+        }
+
+        string best = name;
+        double bestScore = 0;
+        double second = 0;
+
+        foreach (string entry in vocabulary)
+        {
+            if (string.IsNullOrWhiteSpace(entry))
+            {
+                continue;
+            }
+
+            if (string.Equals(entry, name, StringComparison.Ordinal))
+            {
+                return entry;
+            }
+
+            double score = Similar.Ratio(name, entry);
+            if (score > bestScore)
+            {
+                second = bestScore;
+                bestScore = score;
+                best = entry;
+            }
+            else if (score > second)
+            {
+                second = score;
+            }
+        }
+
+        return bestScore >= threshold && bestScore - second >= margin ? best : name;
     }
 
     /// <summary>本服语法：括号锚定。见类注释。</summary>

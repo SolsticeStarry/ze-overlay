@@ -14,7 +14,7 @@
 ## 项目
 
 CS2（ZE 模式）**神器列表识别 + 点击穿透叠加**。
-C# / .NET 8（`net8.0-windows10.0.19041.0`）+ WPF，识别用 **PP-OCRv3 ONNX**。
+C# / .NET 8（`net8.0-windows10.0.19041.0`）+ WPF，识别用 **PP-OCR ONNX**（`models/` 里按 **v6 → v4 → v3** 自动选，默认 v6；v3 会把括号数字读丢/读多）。
 
 ```
 截屏 → ROI 裁剪 → 行剖分 + 等距网格吸附 → 逐行 PP-OCR
@@ -29,7 +29,7 @@ C# / .NET 8（`net8.0-windows10.0.19041.0`）+ WPF，识别用 **PP-OCRv3 ONNX**
 
 ```powershell
 dotnet build ZeOverlay.slnx         # 注意是 .slnx（.NET 10 SDK 新格式）
-dotnet test  ZeOverlay.slnx         # 293 个用例
+dotnet test  ZeOverlay.slnx         # 320 个用例
 
 $gui = "src\ZeOverlay.Gui\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.Gui.exe"
 $cli = "src\ZeOverlay.Cli\bin\Debug\net8.0-windows10.0.19041.0\ZeOverlay.Cli.exe"
@@ -115,7 +115,7 @@ python -m venv .venv-quant
 | `src/ZeOverlay.Stage.Presentation` | **S7** 展示/叠加（WPF，`IPresentationStage`） |
 | `src/ZeOverlay.Gui` | 组合根：装配阶段 + 采集线程/节流/标定/热键/持久化（`Host.*`） |
 | `src/ZeOverlay.Cli` | 控制台离线工具：`--capture-once` / `--analyze-image` / `--ocr` / `--recognize` / `--bench-ocr` |
-| `tests/ZeOverlay.Tests` | xUnit 聚合测试（293 用例）；`Scenarios/` = exg/fys 双服假 HUD 场景回放 + 连续随机浸泡（`RandomizedServerSimulation`：平均 ~12 条、同类多神器、EXG 12+ 翻页（~5s 一次）、场景色漂移、tick 抖动；150 种子扫描 + 2000 组随机参数模糊测试） |
+| `tests/ZeOverlay.Tests` | xUnit 聚合测试（320 用例）；`Scenarios/` = exg/fys 双服假 HUD 场景回放 + 连续随机浸泡（`RandomizedServerSimulation`：平均 ~12 条、同类多神器、EXG 12+ 翻页（~5s 一次）、场景色漂移、tick 抖动；150 种子扫描 + 2000 组随机参数模糊测试） |
 
 ## 本项目专属约束
 
@@ -174,3 +174,6 @@ python -m venv .venv-quant
 | 连写服日志刷「疑似翻页」 | 结构观测按行数骤降判翻页，但社区服无翻页 | 连写模式下不再追加「疑似翻页」，只记行数/内容变化 |
 | 连写服**长倒计时经常瞬间跳 `[R]`**（实机反馈） | 冷却显示 `49s`，OCR 偶尔把结尾 `s` 读丢成 `49`；解析器「`∞` 被读成数字」的兜底把**任意 1~2 位结尾数字**都当无限 ⇒ 变就绪 | 兜底收紧为**只认单个 `0`/`8`**（实测的 `∞` 误读）；`49` 之类解析失败被丢弃、由本地外推继续走冷却。回归 `ParsePlain_DroppedCooldownSuffix_IsNotTreatedAsReady` |
 | 同名多神器**上下跳变**（`爆闪1` 窜到 `爆闪2` 下面） | 叠加排序在同名同组时用**行位**分先后，连写服回流让行位互换 | 排序收尾改用「页 → **标号** → 行位」，同名条目恒按 1、2、3… 排。回归 `Watchlist_SameNameMultiples_OrderByServerIndex_NotChurningSlot`、`Cooldown_SameNameMultiples_OrderByServerIndex` |
+| 亮底（白背景）下条目"消失"/读花 | ① 本服行整段丢方括号（`袋装火盐门3小小猪头`）被 `ParseAuto` 丢弃 → 该槽位不更新；② 名字被读花成 `袋装火盐门`，名单阈值 0.85 不认 → 叠加里被滤掉（跟踪器其实还有） | ① `ParseAuto` 最后兜底**裸状态**（仅当行不以连写服状态结尾）；② `ParsingStage` 用名表**纠错**（`CanonicalizeName`：`袋装火盐门`→`袋装火盐`）；③ 识别输入对**低对比裁剪**做分位数拉伸（`PpOcrInput.BuildContrastStretch`）。样本 `docs/ref/暂停.png`，回归 `ParseAuto_RecoversBracketLineWithLostBrackets`、`CanonicalizeName_*`、`BuildContrastStretch_OnlyForLowContrast` |
+| **两位数倒计时显示成个位数 / 个位被吞**（`[15]`→`5`、`[42]`→`4`） | PP-OCRv3 把开括号+数字读花（`[1`→`门`、`52`→`521`）；v3 对该 UI 的 `[数字]` 既吞位又加位，每帧不一致 | **换 PP-OCRv6 rec**（`PpOcrModels` 自动 v6→v4→v3；样本 7/7 全对且置信 0.96~1.00）+ 冷却**下界防跳变**（掉 >2s 视为吞位）+ 冷却**多帧投票**（`CooldownVote`：最新读数与近 3 帧中位差 ≥2 判读花、取中位；重置清历史）。回归 `CooldownVote_*`、`ImplausibleDrop_DroppedTensDigit_IsIgnored`、`PpOcrModelsTests` |
+| 模型路径写死 v3、换模型要改代码 | `Host`/`Cli` 曾硬编码 `ch_PP-OCRv3_rec_infer.onnx` + `ppocr_keys_v1.txt` | `PpOcrModels.Resolve(modelsDir, ModelFile, KeysFile)`：v6→v4→v3 自动挑；v5/v6 用独立字典 `ppocrv{5,6}_dict.txt`；`Recognition.ModelFile/KeysFile` 可显式覆盖 |

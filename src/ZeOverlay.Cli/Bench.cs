@@ -30,7 +30,7 @@ namespace ZeOverlay.Cli;
 /// </summary>
 internal static class BenchOcr
 {
-    public static int Run(string imagePath, string? roiText, string? modelPath, int? threads, int repeat, string? outPath, bool? allowSpinning, OcrExecutionProvider provider, int deviceId, int fixedWidth, int batchSize)
+    public static int Run(string imagePath, string? roiText, string? modelPath, string? keysFile, int? threads, int repeat, string? outPath, bool? allowSpinning, OcrExecutionProvider provider, int deviceId, int fixedWidth, int batchSize)
     {
         if (string.IsNullOrWhiteSpace(imagePath) || !File.Exists(imagePath))
         {
@@ -69,10 +69,10 @@ internal static class BenchOcr
             : full.Crop(roi.X, roi.Y, roi.Width, roi.Height);
 
         Paths paths = Paths.ForExecutable();
-        string resolvedModel = string.IsNullOrWhiteSpace(modelPath)
-            ? Path.Combine(paths.BaseDirectory, "models", "ch_PP-OCRv3_rec_infer.onnx")
-            : modelPath;
-        string keysPath = Path.Combine(paths.BaseDirectory, "models", "ppocr_keys_v1.txt");
+        PpOcrModels.Resolved resolved = PpOcrModels.Resolve(
+            Path.Combine(paths.BaseDirectory, "models"), modelPath, keysFile);
+        string resolvedModel = resolved.ModelPath;
+        string keysPath = resolved.KeysPath;
 
         if (!File.Exists(resolvedModel) || !File.Exists(keysPath))
         {
@@ -80,7 +80,7 @@ internal static class BenchOcr
             return 5;
         }
 
-        using var engine = new PpOcrEngine(resolvedModel, keysPath, threads, allowSpinning, provider, deviceId);
+        using var engine = new PpOcrEngine(resolvedModel, keysPath, threads, allowSpinning, provider, deviceId, label: resolved.Label);
         RowReport report = Analyzer.Analyze(target);
         IReadOnlyList<RowBand> bands = report.GridBands.Count > 0 ? report.GridBands : report.Bands;
         IReadOnlyList<RowCrop> crops = new GlyphSegmentationStage().Process(new RowInput(target, report));
@@ -90,7 +90,7 @@ internal static class BenchOcr
         sb.AppendLine($"图像   : {imagePath}  ({full.Width}x{full.Height})");
         sb.AppendLine($"ROI    : {roi}  分析区 {target.Width}x{target.Height}");
         sb.AppendLine($"引擎   : {engine.Name}");
-        sb.AppendLine($"模型   : {resolvedModel}  ({new FileInfo(resolvedModel).Length / 1048576.0:0.00} MB)");
+        sb.AppendLine($"模型   : {resolvedModel}  ({new FileInfo(resolvedModel).Length / 1048576.0:0.00} MB)   字典: {Path.GetFileName(keysPath)}");
         sb.AppendLine($"EP     : {provider}   线程: {(threads is { } t ? t.ToString(CultureInfo.InvariantCulture) : "自动")}   自旋: {(allowSpinning is { } s ? (s ? "开" : "关") : "默认")}   固定宽度: {(fixedWidth > 0 ? fixedWidth.ToString(CultureInfo.InvariantCulture) : "关")}   批大小: {Math.Max(1, batchSize)}");
         sb.AppendLine($"行数   : {bands.Count}");
 

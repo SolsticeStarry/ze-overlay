@@ -41,7 +41,10 @@ internal static class PpOcrInput
 
         // 直接写底层 buffer：tensor[i,c,y,x] 的三维索引器每次都要算 stride + 边界检查，
         // 48×width×3 次下来是预处理里最贵的一块。
-        ReadOnlySpan<byte> src = crop.Bgra;
+        // 低对比度（亮白底、白字贴白底）先做分位数拉伸，拉大字/底差异再送模型；
+        // 对比度足够或全平的低对比帧不受影响。
+        byte[]? stretched = BuildContrastStretch(crop);
+        ReadOnlySpan<byte> src = stretched ?? crop.Bgra;
         int plane = TargetHeight * targetWidth;
         int dstBase = batchIndex * 3 * plane;
         double scaleY = crop.Height / (double)TargetHeight;
@@ -89,5 +92,65 @@ internal static class PpOcrInput
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 低对比度裁剪的分位数拉伸（[p5,p95] → [0,255]）。只在动态范围 1..99 时启用：
+    /// 范围足够（对比度好）或全平（无对比）时返回 null，保持原像素、避免放大噪声。
+    /// 针对**亮白底/白字贴白底**导致 PP-OCR 掉字/读花的情况。internal 供单测。
+    /// </summary>
+    internal static byte[]? BuildContrastStretch(ImageFrame crop)
+    {
+        var histogram = new int[256];
+        for (int y = 0; y < crop.Height; y++)
+        {
+            for (int x = 0; x < crop.Width; x++)
+            {
+                histogram[crop.LuminanceAt(x, y)]++;
+            }
+        }
+
+        long total = (long)crop.Width * crop.Height;
+        int low = Percentile(histogram, total, 5);
+        int high = Percentile(histogram, total, 95);
+
+        if (high - low < 1 || high - low >= 100)
+        {
+            return null;
+        }
+
+        var lut = new byte[256];
+        for (int i = 0; i < 256; i++)
+        {
+            lut[i] = (byte)Math.Clamp((i - low) * 255 / (high - low), 0, 255);
+        }
+
+        byte[] pixels = new byte[crop.Bgra.Length];
+        for (int i = 0; i < pixels.Length; i += 4)
+        {
+            pixels[i] = lut[crop.Bgra[i]];
+            pixels[i + 1] = lut[crop.Bgra[i + 1]];
+            pixels[i + 2] = lut[crop.Bgra[i + 2]];
+            pixels[i + 3] = 255;
+        }
+
+        return pixels;
+    }
+
+    private static int Percentile(int[] histogram, long total, double percentile)
+    {
+        long target = (long)(total * percentile / 100.0);
+        long running = 0;
+
+        for (int i = 0; i < histogram.Length; i++)
+        {
+            running += histogram[i];
+            if (running >= target)
+            {
+                return i;
+            }
+        }
+
+        return histogram.Length - 1;
     }
 }

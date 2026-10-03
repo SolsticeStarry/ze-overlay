@@ -48,12 +48,14 @@ public sealed class PpOcrEngine : IDisposable
         int? intraOpThreads = null,
         bool? allowSpinning = null,
         OcrExecutionProvider provider = OcrExecutionProvider.Cpu,
-        int deviceId = 0)
+        int deviceId = 0,
+        string? label = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modelPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(keysPath);
 
         ModelPath = modelPath;
+        KeysPath = keysPath;
         Provider = provider;
 
         bool needsOptions = intraOpThreads is { } || allowSpinning is { } || provider != OcrExecutionProvider.Cpu;
@@ -95,7 +97,7 @@ public sealed class PpOcrEngine : IDisposable
 
         _characters = BuildCharacters(keysPath, classCount);
         string ep = provider == OcrExecutionProvider.DirectML ? "+DML" : string.Empty;
-        Name = $"PP-OCRv3-rec({_characters.Length - (classCount == _characters.Length ? 1 : 0)} 类){ep}";
+        Name = $"{(string.IsNullOrWhiteSpace(label) ? PpOcrModels.LabelFor(modelPath) : label)}({_characters.Length - (classCount == _characters.Length ? 1 : 0)} 类){ep}";
     }
 
     public string Name { get; }
@@ -105,6 +107,9 @@ public sealed class PpOcrEngine : IDisposable
 
     /// <summary>实际加载的模型文件路径（供基准/诊断记录）。</summary>
     public string ModelPath { get; }
+
+    /// <summary>实际加载的字典路径（供基准/诊断记录）。</summary>
+    public string KeysPath { get; }
 
     /// <summary>识别一批已裁好的行（S2 的产物），Slot 原样带回。</summary>
     public IReadOnlyList<PpOcrRow> RecognizeCrops(IReadOnlyList<RowCrop> crops, int fixedWidth = 0, int batchSize = 1)

@@ -66,7 +66,12 @@ public sealed partial class Host
         if (_pipeline is not null)
         {
             var pipelineWatch = Stopwatch.StartNew();
-            PipelineStepResult step = _pipeline.Step(frame, report, DateTimeOffset.Now);
+            PipelineStepResult step;
+            lock (_trackerGate)
+            {
+                step = _pipeline.Step(frame, report, DateTimeOffset.Now);
+            }
+
             pipelineWatch.Stop();
             _lastOcrMs = pipelineWatch.Elapsed.TotalMilliseconds;
 
@@ -126,7 +131,11 @@ public sealed partial class Host
             _log?.Warn($"[识别] 有 {unparsed.Count} 行解析失败，样例：{string.Join(" ｜ ", unparsed.Take(4))}");
         }
 
-        TrackerFrameResult result = _tracker.Observe(report.RowCount, observed, DateTimeOffset.Now);
+        TrackerFrameResult result;
+        lock (_trackerGate)
+        {
+            result = _tracker.Observe(report.RowCount, observed, DateTimeOffset.Now);
+        }
 
         if (result.Added.Count > 0 || result.Removed.Count > 0)
         {
@@ -153,7 +162,11 @@ public sealed partial class Host
 
         _lastEntryDumpAt = DateTime.UtcNow;
 
-        IReadOnlyList<TrackerEntryView> all = _tracker.Snapshot(DateTimeOffset.Now);
+        IReadOnlyList<TrackerEntryView> all;
+        lock (_trackerGate)
+        {
+            all = _tracker.Snapshot(DateTimeOffset.Now);
+        }
         int matched = all.Count(e => _watchlist.IsEmpty || _watchlist.Match(e.ArtifactName) is not null);
 
         string detail = string.Join(
@@ -225,7 +238,12 @@ public sealed partial class Host
     /// <summary>按关注名单过滤；名单为空时全部显示（否则界面上什么都看不到，没法用）。</summary>
     private void BuildRecognitionText(DateTimeOffset now, string engineLabel)
     {
-        IReadOnlyList<TrackerEntryView> entries = _tracker.Snapshot(now);
+        // 独立定时器也会读到这份快照，加锁避免与采集线程的 Observe 竞争。
+        IReadOnlyList<TrackerEntryView> entries;
+        lock (_trackerGate)
+        {
+            entries = _tracker.Snapshot(now);
+        }
 
         // 只要还有带标号的条目，就认为当前是连写服（用于自动提速）。
         if (entries.Count > 0)
@@ -337,6 +355,27 @@ public sealed partial class Host
             _overlay?.UpdateEntries(shown, _config.Overlay, hasWatchlist);
             EnsureOverlayAvoidsRoi();
         });
+    }
+
+    /// <summary>
+    /// 独立的倒计时/叠加刷新（由 200ms 定时器驱动）：不依赖 OCR/采集节奏，
+    /// 直接按墙钟从跟踪器快照重建（<see cref="Tracker.Snapshot"/> 自会外推倒计时）。
+    /// </summary>
+    private void RefreshOverlayTick()
+    {
+        if (_disposed || _overlay is null)
+        {
+            return;
+        }
+
+        try
+        {
+            BuildRecognitionText(DateTimeOffset.Now, _recognitionName);
+        }
+        catch (Exception ex)
+        {
+            _log?.Error("[倒计时] 独立刷新失败", ex);
+        }
     }
 
     private IReadOnlyList<string> CompactRecentNames()

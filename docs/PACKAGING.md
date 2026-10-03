@@ -34,8 +34,10 @@ powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip -SignThumbprint 
 ```
 publish/ZeOverlay/                  自包含运行目录
     ZeOverlay.Gui.exe
-    models/ch_PP-OCRv3_rec_infer.onnx
-    models/ppocr_keys_v1.txt
+    models/ch_PP-OCRv6_rec_infer.onnx
+    models/ppocrv6_dict.txt
+    models/ch_PP-OCRv3_rec_infer.onnx   回退（旧机器/对比）
+    models/ppocr_keys_v1.txt            v3/v4 字典
     启动 ZeOverlay.bat              便携启动（双击）
     install.ps1                     安装器
     安装到本机.bat                  双击安装（复制到本机 + 建快捷方式）
@@ -75,7 +77,7 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall -AppDir D:\Tools
 | 发布产物 | 283 个文件，**214.9 MB**（含 WPF + onnxruntime + DirectML） |
 | zip（Optimal） | **91.8 MB** |
 | 自包含启动 | ✅ 目标机无需 .NET；启动日志正常 |
-| **DirectML 在单文件夹下加载** | ✅ 日志 `PP-OCRv3-rec(6624 类)+DML`，无缺 DLL 崩溃 |
+| **DirectML 在单文件夹下加载** | ✅ 日志 `PP-OCRv6-rec(18709 类)+DML`，无缺 DLL 崩溃 |
 | 安装/卸载可逆 | ✅ 复制、桌面/开始菜单快捷方式、卸载均验证通过 |
 
 ## 单文件安装程序（.exe，给最终用户）

@@ -27,11 +27,11 @@ public class ArtifactTrackerTests
         var tracker = new Tracker();
 
         tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 20)], T0);
-        TrackerFrameResult result = tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 7)], T0.AddSeconds(2));
+        TrackerFrameResult result = tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 18)], T0.AddSeconds(2));
 
         Assert.Empty(result.Added);
         Assert.Single(result.Refreshed);
-        Assert.Equal(7, tracker.Snapshot(T0.AddSeconds(2))[0].CooldownSeconds);
+        Assert.Equal(18, tracker.Snapshot(T0.AddSeconds(2))[0].CooldownSeconds);
     }
 
     [Fact]
@@ -188,10 +188,10 @@ public class ArtifactTrackerTests
         TrackerEntryView before = tracker.Snapshot(T0.AddSeconds(4)).Single(e => e.Page == VisiblePage.Page1);
         Assert.Equal(26, before.CooldownSeconds);
 
-        tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 9)], T0.AddSeconds(5));
+        tracker.Observe(12, [Row(0, "滋水枪", ArtifactState.Cooling, 25)], T0.AddSeconds(5));
         TrackerEntryView after = tracker.Snapshot(T0.AddSeconds(5)).Single(e => e.Page == VisiblePage.Page1);
 
-        Assert.Equal(9, after.CooldownSeconds);
+        Assert.Equal(25, after.CooldownSeconds);
         Assert.Equal(EntrySource.Live, after.Source);
     }
 

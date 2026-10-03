@@ -164,4 +164,59 @@ public sealed class PlainLineParserTests
         Assert.True(bracket is null || bracket.ArtifactName != plain.ArtifactName
             || bracket.PlayerName != plain.PlayerName);
     }
+
+    [Theory]
+    [InlineData("袋装火盐门", "袋装火盐")]     // 实机亮底读花：多一个「门」
+    [InlineData("装杏仁水", "桶装杏仁水")]     // 首字被切
+    [InlineData("爆闪相机", "爆闪相机")]       // 已是标准名
+    public void CanonicalizeName_SnapsNearMissToVocabulary(string raw, string expected)
+        => Assert.Equal(expected, Parser.CanonicalizeName(raw, ["袋装火盐", "桶装杏仁水", "爆闪相机", "手电筒"]));
+
+    [Fact]
+    public void CanonicalizeName_EmptyVocabulary_Unchanged()
+        => Assert.Equal("袋装火盐门", Parser.CanonicalizeName("袋装火盐门", null));
+
+    [Fact]
+    public void CanonicalizeName_Ambiguous_Unchanged()
+        => Assert.Equal(
+            "墨色瓶中闪电",
+            Parser.CanonicalizeName("墨色瓶中闪电", ["黑色瓶中闪电", "紫色瓶中闪电"]));
+
+    [Theory]
+    [InlineData("袋装火盐R用户6744311", "袋装火盐", "用户6744311", ArtifactState.Ready)] // 丢方括号，裸 R
+    [InlineData("袋装火盐门3小小猪头", "袋装火盐门", "小小猪头", ArtifactState.Cooling)]   // 丢方括号，裸数字
+    [InlineData("爆闪相机[R】芙宁娜", "爆闪相机", "芙宁娜", ArtifactState.Ready)]
+    public void ParseAuto_RecoversBracketLineWithLostBrackets(
+        string raw, string expectedName, string expectedPlayer, ArtifactState expectedState)
+    {
+        ParsedRow? parsed = Parser.ParseAuto(raw, ["袋装火盐", "爆闪相机"]);
+
+        Assert.NotNull(parsed);
+        Assert.Equal(expectedName, parsed!.ArtifactName);
+        Assert.Equal(expectedPlayer, parsed.PlayerName);
+        Assert.Equal(expectedState, parsed.State);
+    }
+
+    [Fact]
+    public void ParsingStage_ParsesAndCanonicalizesRealBrightFrameLines()
+    {
+        // docs/ref/暂停.png（亮底）经 CLI 得到的真实原始 OCR；第 5 行 `袋装火盐门` 被读花。
+        var stage = new ParsingStage(vocabulary: ["爆闪相机", "桶装杏仁水", "袋装火盐", "紫色瓶中闪电"]);
+
+        IReadOnlyList<ParsedRow> parsed = stage.Process(
+        [
+            new RecognizedRow(0, "爆闪相机[4]】只比你强亿点点", 0.86),
+            new RecognizedRow(1, "桶装杏仁水[R木木睦睦木木睦", 0.89),
+            new RecognizedRow(2, "袋装火盐[48]帝乃三和", 0.86),
+            new RecognizedRow(3, "紫色瓶中闪电[37】明天还会更好吗", 0.86),
+            new RecognizedRow(4, "爆闪相机[R】芙宁娜B站31947551", 0.90),
+            new RecognizedRow(5, "袋装火盐门3小小猪头", 0.85),
+            new RecognizedRow(6, "袋装火盐【13】用户0818842", 0.82),
+        ]);
+
+        Assert.Equal(7, parsed.Count);
+        Assert.Equal(
+            ["爆闪相机", "桶装杏仁水", "袋装火盐", "紫色瓶中闪电", "爆闪相机", "袋装火盐", "袋装火盐"],
+            parsed.Select(p => p.ArtifactName));
+    }
 }

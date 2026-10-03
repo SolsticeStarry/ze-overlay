@@ -1,0 +1,87 @@
+{
+  "engine": "PP-OCRv3-rec(6624 类)",
+  "inputLineCount": 7,
+  "parsedCount": 7,
+  "rawTexts": [
+    "爆闪相机[4]】只比你强亿点点   [置信 0.86]",
+    "桶装杏仁水[R木木睦睦木木睦   [置信 0.89]",
+    "袋装火盐[48]帝乃三和   [置信 0.86]",
+    "紫色瓶中闪电[37】明天还会更好！   [置信 0.86]",
+    "爆闪相机[R芙宁娜B站319475   [置信 0.90]",
+    "袋装火盐门3小小猪头   [置信 0.85]",
+    "袋装火盐【13】用户0818842   [置信 0.82]"
+  ],
+  "watchlist": [],
+  "rows": [
+    {
+      "artifact": "爆闪相机",
+      "player": "只比你强亿点点",
+      "state": "Cooling",
+      "cooldownSeconds": 4,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "爆闪相机[4]】只比你强亿点点"
+    },
+    {
+      "artifact": "桶装杏仁水",
+      "player": "木木睦睦木木睦",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "桶装杏仁水[R木木睦睦木木睦"
+    },
+    {
+      "artifact": "袋装火盐",
+      "player": "帝乃三和",
+      "state": "Cooling",
+      "cooldownSeconds": 48,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "袋装火盐[48]帝乃三和"
+    },
+    {
+      "artifact": "紫色瓶中闪电",
+      "player": "明天还会更好！",
+      "state": "Cooling",
+      "cooldownSeconds": 37,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "紫色瓶中闪电[37】明天还会更好！"
+    },
+    {
+      "artifact": "爆闪相机",
+      "player": "芙宁娜B站319475",
+      "state": "Ready",
+      "cooldownSeconds": null,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "爆闪相机[R芙宁娜B站319475"
+    },
+    {
+      "artifact": "袋装火盐门",
+      "player": "小小猪头",
+      "state": "Cooling",
+      "cooldownSeconds": 3,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "袋装火盐门3小小猪头"
+    },
+    {
+      "artifact": "袋装火盐",
+      "player": "用户0818842",
+      "state": "Cooling",
+      "cooldownSeconds": 13,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "袋装火盐【13】用户0818842"
+    }
+  ]
+}

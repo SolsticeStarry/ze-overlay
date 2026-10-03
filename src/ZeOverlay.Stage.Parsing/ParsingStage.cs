@@ -38,6 +38,16 @@ public sealed class ParsingStage : IParsingStage
             ParsedRow? parsed = Parser.ParseAuto(row.Text, _vocabulary);
             if (parsed is not null)
             {
+                // 名表纠错：把近义读花按名表改成标准写法（尤其本服 bracket 行，以前不纠）。
+                if (_vocabulary.Count > 0)
+                {
+                    string canonical = Parser.CanonicalizeName(parsed.ArtifactName, _vocabulary);
+                    if (!string.Equals(canonical, parsed.ArtifactName, StringComparison.Ordinal))
+                    {
+                        parsed = parsed with { ArtifactName = canonical };
+                    }
+                }
+
                 result.Add(parsed with { Slot = row.Slot });
             }
         }

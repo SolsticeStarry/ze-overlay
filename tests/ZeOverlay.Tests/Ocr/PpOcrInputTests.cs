@@ -74,4 +74,37 @@ public class PpOcrInputTests
         Assert.Equal(0.0, dst[0], 3);
         Assert.Equal(-1.0, dst[3 * plane], 3);
     }
+
+    [Fact]
+    public void BuildContrastStretch_OnlyForLowContrast()
+    {
+        // 低对比（200/240，跨度 40）⇒ 拉伸；200→0、240→255
+        byte[]? low = PpOcrInput.BuildContrastStretch(MakeGray(200, 240));
+        Assert.NotNull(low);
+        Assert.Equal(0, low![0]);     // 第一个像素是 200
+        Assert.Equal(255, low[4]);    // 第二个像素是 240
+
+        // 高对比（20/240，跨度 220）⇒ 不处理
+        Assert.Null(PpOcrInput.BuildContrastStretch(MakeGray(20, 240)));
+
+        // 全平（200/200）⇒ 不处理（避免放大噪声）
+        Assert.Null(PpOcrInput.BuildContrastStretch(MakeGray(200, 200)));
+    }
+
+    private static ImageFrame MakeGray(byte even, byte odd)
+    {
+        const int w = 10;
+        const int h = 10;
+        var bgra = new byte[w * h * 4];
+        for (int p = 0; p < w * h; p++)
+        {
+            byte v = p % 2 == 0 ? even : odd;
+            bgra[p * 4] = v;
+            bgra[p * 4 + 1] = v;
+            bgra[p * 4 + 2] = v;
+            bgra[p * 4 + 3] = 255;
+        }
+
+        return ImageFrame.FromBgra(w, h, bgra);
+    }
 }

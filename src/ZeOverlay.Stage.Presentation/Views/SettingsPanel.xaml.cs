@@ -401,6 +401,8 @@ public partial class SettingsPanel : UserControl
                 FixedInputWidth = source.Recognition.FixedInputWidth,
                 BatchSize = source.Recognition.BatchSize,
                 IntervalMs = source.Recognition.IntervalMs,
+                ModelFile = source.Recognition.ModelFile,
+                KeysFile = source.Recognition.KeysFile,
             },
             Tracking = new TrackingConfig
             {

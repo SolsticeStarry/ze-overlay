@@ -1,0 +1,83 @@
+{
+  "engine": "PP-OCRv3-rec(6624 类)",
+  "inputLineCount": 13,
+  "parsedCount": 6,
+  "rawTexts": [
+    "2026.-22 室失眠症，上午+点录屏50:40   [置信 0.65]",
+    "   [置信 0.00]",
+    "pPianthtmaynotb plyedthatwel-oby Fox   [置信 0.47]",
+    "爆闪相机［[4]只比你强亿点点   [置信 0.88]",
+    "桶装杏仁水[木木睦睦木木睦）   [置信 0.85]",
+    "袋装火盐[48]带奶三和速 240输出807万2%6（76）   [置信 0.55]",
+    "紫色瓶中闪电[37]明天还会更好吗皮游0g   [置信 0.76]",
+    "帝三和图袋装火148]爆闪相机[芙宁娜B站31947551   [置信 0.84]",
+    "用户0818袋装火213]袋装火盗[3]小小猪头题   [置信 0.69]",
+    "只比你强爆闪相机1[4袋装火 [13]用户0818842全   [置信 0.80]",
+    "TE区，你从日购买了手惠，本同合还能购买次（指令购奖是）   [置信 0.56]",
+    "EX社区 你从日购买了手售，本回合还能购买1次（指令购买是he）2   [置信 0.67]",
+    "0201604784个★人博事见证当弹韩礼仪工发送108060倍速字幕   [置信 0.54]"
+  ],
+  "watchlist": [],
+  "rows": [
+    {
+      "artifact": "2026.-",
+      "player": "室失眠症，上午+点录屏50:40",
+      "state": "Cooling",
+      "cooldownSeconds": 22,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "2026.-22 室失眠症，上午+点录屏50:40"
+    },
+    {
+      "artifact": "爆闪相机",
+      "player": "只比你强亿点点",
+      "state": "Cooling",
+      "cooldownSeconds": 4,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "爆闪相机［[4]只比你强亿点点"
+    },
+    {
+      "artifact": "袋装火盐[48]带奶三和速240输出807万2%6",
+      "player": "",
+      "state": "Cooling",
+      "cooldownSeconds": 76,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "袋装火盐[48]带奶三和速 240输出807万2%6（76）"
+    },
+    {
+      "artifact": "紫色瓶中闪电",
+      "player": "明天还会更好吗皮游0g",
+      "state": "Cooling",
+      "cooldownSeconds": 37,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "紫色瓶中闪电[37]明天还会更好吗皮游0g"
+    },
+    {
+      "artifact": "用户0818袋装火213]袋装火盗",
+      "player": "小小猪头题",
+      "state": "Cooling",
+      "cooldownSeconds": 3,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "用户0818袋装火213]袋装火盗[3]小小猪头题"
+    },
+    {
+      "artifact": "只比你强爆闪相机1[4袋装火",
+      "player": "用户0818842全",
+      "state": "Cooling",
+      "cooldownSeconds": 13,
+      "usesRemaining": null,
+      "usesTotal": null,
+      "matchedName": null,
+      "raw": "只比你强爆闪相机1[4袋装火 [13]用户0818842全"
+    }
+  ]
+}

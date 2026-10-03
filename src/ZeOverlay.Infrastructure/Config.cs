@@ -129,6 +129,16 @@ public sealed class RecognitionConfig
     /// Host 会把它钳制在 200–5000 ms。
     /// </summary>
     public int IntervalMs { get; set; } = 1000;
+
+    /// <summary>
+    /// rec 模型文件名（在 models 目录下，或绝对路径）；空 = 自动挑选
+    /// （v6 → v4 → v3，见 <c>PpOcrModels</c>）。实测 v3 会把括号数字读丢/读多，
+    /// 默认自动用可用的最好模型。
+    /// </summary>
+    public string ModelFile { get; set; } = string.Empty;
+
+    /// <summary>字典文件名（在 models 目录下，或绝对路径）；空 = 按模型版本自动匹配。</summary>
+    public string KeysFile { get; set; } = string.Empty;
 }
 
 /// <summary>穿透叠加窗口（PLAN 第 8.1 节）。</summary>
