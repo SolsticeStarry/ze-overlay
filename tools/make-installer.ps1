@@ -171,9 +171,26 @@ try {
     Write-Host "暂存目录：$stage"
 
     # 1) 载荷：整个发布目录压成一个 zip。
+    #    排除**运行时数据**（shots/logs/config/watchlist）：它们不是程序的一部分，
+    #    打进安装包会把用户的配置与截图一起分发，而且 logs/app.log 正被运行实例占用会导致压缩失败。
     $payload = Join-Path $stage 'payload.zip'
-    Write-Host "压缩载荷中（$((Get-ChildItem $PublishDir -Recurse -File).Count) 个文件）..."
-    Compress-Archive -Path (Join-Path $PublishDir '*') -DestinationPath $payload -CompressionLevel Optimal
+    $excludeTopDirs = @('shots', 'logs')
+    $excludeRelFiles = @('config.json', 'watchlist.json')
+    $appStage = Join-Path $stage 'app'
+    New-Item -ItemType Directory -Force -Path $appStage | Out-Null
+    $kept = 0
+    foreach ($file in (Get-ChildItem $PublishDir -Recurse -File -Force)) {
+        $rel = $file.FullName.Substring($PublishDir.Length).TrimStart('\')
+        $top = ($rel -split '\\')[0]
+        if (($excludeTopDirs -contains $top) -or ($excludeRelFiles -contains $rel)) { continue }
+
+        $dest = Join-Path $appStage $rel
+        New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
+        Copy-Item $file.FullName $dest -Force
+        $kept++
+    }
+    Write-Host "压缩载荷中（$kept 个文件，已排除 shots/logs/config/watchlist）..."
+    Compress-Archive -Path (Join-Path $appStage '*') -DestinationPath $payload -CompressionLevel Optimal
     Write-Host ("  payload.zip = {0} MB" -f [math]::Round((Get-Item $payload).Length / 1MB, 1))
 
     # 2) 引导 cmd：选目录 → 展开 → 建快捷方式。

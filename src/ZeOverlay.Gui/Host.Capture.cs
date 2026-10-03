@@ -88,8 +88,10 @@ public sealed partial class Host
             PublishFrame();
 
             int configuredPeriodMs = Math.Max(50, 1000 / Math.Max(1, _config.Capture.Fps));
-            // 连写服自动提速到 5Hz（200ms），括号服沿用配置频率。
-            int periodMs = _communityMode ? Math.Min(configuredPeriodMs, 200) : configuredPeriodMs;
+            // 连写/带标号服自动提速（默认 300ms）；倒计时靠独立的 200ms tick 外推，
+            // 不需要 5Hz 高频采集——5Hz 会让 GPU OCR 与 GDI BitBlt 每 200ms 抢游戏帧。
+            int communityPeriodMs = Math.Clamp(_config.Recognition.CommunityIntervalMs, 150, 1000);
+            int periodMs = _communityMode ? Math.Min(configuredPeriodMs, communityPeriodMs) : configuredPeriodMs;
             int sleep = periodMs - (int)watch.ElapsedMilliseconds;
             if (sleep > 0)
             {
@@ -113,7 +115,8 @@ public sealed partial class Host
             return;
         }
 
-        BitmapSource? image = Presenter.ToBitmapSource(_lastFrame);
+        // 预览窗口不可见时不必把 ROI 转成 BitmapSource 并上传（5Hz 的纹理上传会跟游戏抢 GPU）。
+        BitmapSource? image = _preview?.IsVisible == true ? Presenter.ToBitmapSource(_lastFrame) : null;
         string status = BuildStatus();
         string recognition = _recognitionText;
         _dispatcher.BeginInvoke(() => _preview?.ShowFrame(image, status, recognition));

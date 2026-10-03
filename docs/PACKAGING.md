@@ -142,6 +142,9 @@ powershell -ExecutionPolicy Bypass -File tools\make-installer.ps1 -Out publish\Z
 例：选择「桌面」→ 安装到 `桌面\ZeOverlay\`，其第一层只有 2 个 bat + `app\`，
 依赖再也不会铺满桌面。
 
+> 打包时会**排除运行时数据**（`shots/`、`logs/`、`config.json`、`watchlist.json`）：
+> 安装包只含程序，配置在首次运行时于 `app\` 旁自动生成。
+
 | 项 | 值 |
 |---|---|
 | 安装器 | `publish\ZeOverlay-Setup.exe`，**92.2 MB**（内嵌 93.3 MB payload.zip） |

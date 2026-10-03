@@ -403,6 +403,7 @@ public partial class SettingsPanel : UserControl
                 IntervalMs = source.Recognition.IntervalMs,
                 ModelFile = source.Recognition.ModelFile,
                 KeysFile = source.Recognition.KeysFile,
+                CommunityIntervalMs = source.Recognition.CommunityIntervalMs,
             },
             Tracking = new TrackingConfig
             {

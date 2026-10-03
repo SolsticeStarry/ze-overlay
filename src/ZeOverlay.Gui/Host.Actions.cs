@@ -102,7 +102,7 @@ public sealed partial class Host
         _notice = $"设置已应用：名单 {_watchlist.Entries.Count} 项，阈值 {_watchlistConfig.MatchThreshold:0.##}，排序 {OverlaySort.Parse(_config.Overlay.SortMode)}";
         _log?.Info($"[设置] 已应用：名单={string.Join('、', _watchlist.Entries)}；阈值={_watchlistConfig.MatchThreshold:0.##}；"
             + $"排序={OverlaySort.Parse(_config.Overlay.SortMode)}；采集={_config.Capture.Fps}Hz；识别间隔={Math.Clamp(_config.Recognition.IntervalMs, 200, 5000)}ms"
-            + "（连写服自动提速 5Hz/200ms）");
+            + $"（连写/带标号服自动提速 {Math.Clamp(_config.Recognition.CommunityIntervalMs, 150, 1000)}ms）");
         BuildRecognitionText(DateTimeOffset.Now, _recognizer?.Name ?? _ocr.Name);
     }
 

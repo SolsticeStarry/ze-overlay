@@ -61,7 +61,8 @@ public sealed partial class Host : IDisposable
 
     /// <summary>
     /// 当前是否识别到「连写服」（行带服务器标号）。用于**自动提速**：
-    /// 连写服列表变化快，采集提到 5Hz、识别 200ms；括号服沿用配置值。
+    /// 连写/带标号服列表变化快，采集与识别按 <see cref="RecognitionConfig.CommunityIntervalMs"/> 提速（默认 300ms）；
+    /// 括号服沿用配置值。倒计时由独立 tick 外推，不需要高频采集。
     /// </summary>
     private volatile bool _communityMode;
 

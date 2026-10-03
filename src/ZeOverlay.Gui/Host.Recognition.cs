@@ -262,6 +262,15 @@ public sealed partial class Host
         var visible = new List<TrackerEntryView>(entries.Count);
         foreach (TrackerEntryView entry in entries)
         {
+            // 单帧幽灵过滤（两帧确认）：只被观测过一次的条目先不显示。
+            // OCR 把标号读花（`1`→`7`）会造出 `大火盐7` 这类不存在的重复条目，按当前消失规则
+            // 会挂满 6 秒；这里要求条目在**至少两帧**被观测到才显示，单帧幽灵直接不显示，
+            // 真实条目下一帧（~300ms）就被再次观测到，代价只是一次极短的延迟。
+            if (entry.LastSeen <= entry.FirstSeen)
+            {
+                continue;
+            }
+
             WatchlistMatch? match = _watchlist.Match(entry.ArtifactName);
             if (!_watchlist.IsEmpty && match is null)
             {
@@ -506,10 +515,13 @@ public sealed partial class Host
     /// <summary>一帧里稳健行数超过这个数，基本是 ROI 混进了非列表内容，该观测丢弃。</summary>
     private const int MaxObservableRows = 24;
 
-    /// <summary>识别刷新间隔。连写服自动提到 200ms（列表变化快）；否则用配置并钳制到安全范围。</summary>
+    /// <summary>
+    /// 识别刷新间隔。连写/带标号服自动提速到 <see cref="RecognitionConfig.CommunityIntervalMs"/>（默认 300ms）；
+    /// 括号服沿用配置并钳制到安全范围。倒计时由独立的 200ms tick 外推，不受此间隔影响。
+    /// </summary>
     private TimeSpan CurrentOcrInterval()
         => _communityMode
-            ? TimeSpan.FromMilliseconds(200)
+            ? TimeSpan.FromMilliseconds(Math.Clamp(_config.Recognition.CommunityIntervalMs, 150, 1000))
             : TimeSpan.FromMilliseconds(Math.Clamp(_config.Recognition.IntervalMs, 200, 5000));
 
 }

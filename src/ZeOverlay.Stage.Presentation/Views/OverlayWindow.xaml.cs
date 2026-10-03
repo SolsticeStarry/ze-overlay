@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -24,6 +25,9 @@ public partial class OverlayWindow : Window
     private const int WsExToolWindow = 0x00000080;
 
     private bool _dragMode;
+
+    /// <summary>上次已渲染内容的签名。内容没变就直接返回，避免 5Hz 反复重建视觉树 + 触发叠加窗口重绘。</summary>
+    private string? _lastSignature;
 
     public OverlayWindow()
     {
@@ -59,6 +63,16 @@ public partial class OverlayWindow : Window
     /// <summary>按跟踪结果重建显示。名单为空时全部显示。</summary>
     public void UpdateEntries(IReadOnlyList<TrackerEntryView> entries, OverlayConfig config, bool hasWatchlist)
     {
+        // 内容没变就不重建：CountdownTick 每 200ms 调一次，但倒计时文本每秒才变一次，
+        // 5Hz 重建整棵视觉树会连带把置顶的逐像素透明窗口反复重绘，是游戏内轻微卡顿的来源之一。
+        string signature = BuildSignature(entries, config, hasWatchlist);
+        if (string.Equals(signature, _lastSignature, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastSignature = signature;
+
         FontSize = config.FontSize;
 
         // 背景不透明度可配（0 = 完全透明，只剩文字）。
@@ -208,6 +222,42 @@ public partial class OverlayWindow : Window
     {
         Left = x;
         Top = y;
+    }
+
+    /// <summary>把会影响渲染的所有输入拼成签名，用于「内容没变就跳过重建」。</summary>
+    private static string BuildSignature(IReadOnlyList<TrackerEntryView> entries, OverlayConfig config, bool hasWatchlist)
+    {
+        var sb = new StringBuilder(entries.Count * 56 + 128);
+        sb.Append(hasWatchlist ? '1' : '0')
+          .Append('|').Append(config.FontSize.ToString(CultureInfo.InvariantCulture))
+          .Append('|').Append(config.BackgroundOpacity.ToString(CultureInfo.InvariantCulture))
+          .Append('|').Append(config.RowSpacing.ToString(CultureInfo.InvariantCulture))
+          .Append('|').Append(config.PlayerNameWidth.ToString(CultureInfo.InvariantCulture))
+          .Append('|').Append(config.ShowUses ? '1' : '0')
+          .Append(config.ShowSourceMark ? '1' : '0')
+          .Append(config.ShowPageSlot ? '1' : '0')
+          .Append(config.ShowRowNumber ? '1' : '0')
+          .Append(config.ShowPlayerName ? '1' : '0')
+          .Append('|').Append(config.LiveColor)
+          .Append('|').Append(config.ExtrapolatedColor)
+          .Append('|').Append(entries.Count.ToString(CultureInfo.InvariantCulture));
+
+        foreach (TrackerEntryView e in entries)
+        {
+            sb.Append('\u001f')
+              .Append((int)e.Page).Append(',')
+              .Append(e.Slot).Append(',')
+              .Append(e.ArtifactName).Append(',')
+              .Append(e.ServerIndex?.ToString(CultureInfo.InvariantCulture) ?? "-").Append(',')
+              .Append((int)e.State).Append(',')
+              .Append(e.CooldownSeconds?.ToString(CultureInfo.InvariantCulture) ?? "-").Append(',')
+              .Append(e.UsesRemaining?.ToString(CultureInfo.InvariantCulture) ?? "-").Append('/')
+              .Append(e.UsesTotal?.ToString(CultureInfo.InvariantCulture) ?? "-").Append(',')
+              .Append((int)e.Source).Append(',')
+              .Append(e.PlayerName);
+        }
+
+        return sb.ToString();
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)

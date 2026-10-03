@@ -139,6 +139,16 @@ public sealed class RecognitionConfig
 
     /// <summary>字典文件名（在 models 目录下，或绝对路径）；空 = 按模型版本自动匹配。</summary>
     public string KeysFile { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 检测到带标号/连写（社区服）时的自动提速间隔（毫秒）。默认 300（约 3.3Hz）。
+    ///
+    /// 这个值同时决定**采集周期**与**识别间隔**。注意：倒计时已由独立的 200ms 叠加 tick
+    /// 按墙钟外推，**不依赖识别频率**，所以这里没必要再压到 200ms——5Hz 会让 GPU OCR
+    /// 与 GDI BitBlt 每 200ms 抢一次游戏帧，造成可见的轻微卡顿。卡就把它调大（如 500）。
+    /// 会被钳制到 150–1000 ms。
+    /// </summary>
+    public int CommunityIntervalMs { get; set; } = 300;
 }
 
 /// <summary>穿透叠加窗口（PLAN 第 8.1 节）。</summary>
