@@ -105,6 +105,24 @@ function Publish-Project {
         Remove-Item $det -Force
         Write-Host "  已剔除运行时无用的检测模型：ch_PP-OCRv3_det_infer.onnx（-2.3 MB）"
     }
+
+    # 精简：WinForms 从未被本 WPF 应用引用（实测删掉后仍正常启动），但 WindowsDesktop
+    # 框架会把它带进自包含发布包（约 21 MB）。
+    $winForms = @(
+        'System.Windows.Forms.dll',
+        'System.Windows.Forms.Design.dll',
+        'System.Windows.Forms.Primitives.dll',
+        'System.Windows.Forms.Design.Editors.dll'
+    )
+    $pruned = 0
+    foreach ($name in $winForms) {
+        $path = Join-Path $Output $name
+        if (Test-Path $path) { Remove-Item $path -Force; $pruned++ }
+    }
+    if ($pruned -gt 0) {
+        Write-Host "  已剔除未引用的 WinForms 程序集（-$pruned 个，约 21 MB）"
+    }
+
     Get-ChildItem $Output -Recurse -Filter *.pdb -ErrorAction SilentlyContinue | Remove-Item -Force
 }
 
@@ -139,6 +157,13 @@ function Invoke-Sign {
 }
 
 Publish-Project -Project $guiProj -Output $guiOut
+
+# 精简：运行时默认只用 v6，v3 rec 仅留仓库作开发回退，不进发布包（-10.2 MB）。
+$legacyRec = Join-Path $guiOut 'models\ch_PP-OCRv3_rec_infer.onnx'
+if (Test-Path $legacyRec) {
+    Remove-Item $legacyRec -Force
+    Write-Host "  已剔除发布包里的旧 v3 rec 模型（-10.2 MB；改用 v6）"
+}
 
 # 便携启动器（双击即用，无控制台窗口）。
 $launcher = Join-Path $guiOut '启动 ZeOverlay.bat'

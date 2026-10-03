@@ -12,6 +12,31 @@
 临时目录，违背「数据在 exe 旁」的设计，也让用户找不到自己的配置与截图。
 因此采用：**一个自包含文件夹**（exe + 运行库 + `models/`），双击即用。
 
+## 安装布局要求（硬性约束）
+
+安装器必须满足以下要求，任何打包改动都不得破坏：
+
+1. **由用户选择安装目录**：弹出「选择安装位置」文件夹对话框，用户选的是**父目录 / 盘符**（可新建文件夹）。
+2. **在所选目录下新建一个文件夹**（固定名 `ZeOverlay`；若所选目录本身就叫 `ZeOverlay` 则直接用），**所有内容都展开进这个文件夹**，而不是散落到用户所选目录里。
+3. **安装根第一层必须干净**：只允许放用户入口（`启动 ZeOverlay.bat`、`卸载.bat`）与程序子目录 `app\`。
+4. **程序本体与全部 `.dll` 依赖放到子目录里**：`ZeOverlay\app\` 内放 `ZeOverlay.Gui.exe`、所有 DLL / 运行时、`models\`；**不允许把依赖铺在安装根第一层**。
+5. 运行时数据（`config.json` / `watchlist.json` / `shots` / `logs`）落在 exe 旁，即 `ZeOverlay\app\`。
+
+```
+<用户选择的父目录>\
+    ZeOverlay\                 ← 新建的安装根，第一层只有下面这些
+        启动 ZeOverlay.bat      ← 用户入口
+        卸载.bat               ← 用户入口
+        app\                   ← 程序本体：exe + 全部 .dll 依赖 + models（依赖都在这一层子目录）
+            ZeOverlay.Gui.exe
+            ...dll / runtime...
+            models\
+```
+
+> 落实位置：`tools/make-installer.ps1` 生成的自解压引导 `install.cmd` 里
+> `APPDIR=<TARGET>\app`（解压进子目录），`install.ps1 -WriteLaunchers` 只在安装根写两个入口；
+> 见下方「单文件安装程序」一节。
+
 ## 命令
 
 ```powershell
@@ -34,10 +59,8 @@ powershell -ExecutionPolicy Bypass -File tools\publish.ps1 -Zip -SignThumbprint 
 ```
 publish/ZeOverlay/                  自包含运行目录
     ZeOverlay.Gui.exe
-    models/ch_PP-OCRv6_rec_infer.onnx
-    models/ppocrv6_dict.txt
-    models/ch_PP-OCRv3_rec_infer.onnx   回退（旧机器/对比）
-    models/ppocr_keys_v1.txt            v3/v4 字典
+    models/ch_PP-OCRv6_rec_infer.onnx   默认模型
+    models/ppocrv6_dict.txt             v6 字典
     启动 ZeOverlay.bat              便携启动（双击）
     install.ps1                     安装器
     安装到本机.bat                  双击安装（复制到本机 + 建快捷方式）
@@ -45,12 +68,17 @@ publish/ZeOverlay-cli/              仅 -IncludeCli 时生成
 publish/ZeOverlay-win-x64.zip       仅 -Zip 时生成
 ```
 
-发布脚本会**精简**运行时用不到的东西：
+发布脚本会**精简**运行时用不到的东西（`publish.ps1` 的 `Publish-Project`）：
 
 | 剔除项 | 原因 | 省下 |
 |---|---|---|
 | `models/ch_PP-OCRv3_det_infer.onnx` | 项目不接检测（det）模型，只用 rec | 2.3 MB |
+| `System.Windows.Forms*.dll`（4 个） | 本 WPF 应用从不引用 WinForms，但 WindowsDesktop 框架会带进来；实测删掉后仍正常启动 | ~21 MB |
+| `models/ch_PP-OCRv3_rec_infer.onnx` | 运行时默认只用 v6；v3 仅留仓库作开发回退 | 10.2 MB |
 | `*.pdb` | 发布包不需要调试符号 | 若干 |
+
+> 仍无法轻易剔除的大块（约占发布 204 MB 的一半）：`Microsoft.Windows.SDK.NET.dll` 23.7 MB（仅系统 OCR 回退用，见下）、
+> `DirectML.dll` 17.7 MB + `onnxruntime.dll` 16.5 MB（GPU 加速必需）、WPF 核心几十 MB（不支持裁剪）、v6 模型 20.3 MB。
 
 ## 安装 / 卸载
 
@@ -70,15 +98,16 @@ powershell -ExecutionPolicy Bypass -File install.ps1 -Uninstall -AppDir D:\Tools
 - 快捷方式指向 `app\ZeOverlay.Gui.exe`，工作目录为 `app\`。
 - `config.json` / `watchlist.json` / `shots` / `logs` 运行时生成在 **exe 旁（即 `app\`）**。
 
-## 实测（2026-10-02，win-x64，Release）
+## 实测（2026-10-03，win-x64，Release，含 PP-OCR v6）
 
 | 项 | 值 |
 |---|---|
-| 发布产物 | 283 个文件，**214.9 MB**（含 WPF + onnxruntime + DirectML） |
-| zip（Optimal） | **91.8 MB** |
+| 发布产物 | 280 个文件，**204 MB**（含 WPF + onnxruntime + DirectML + v6 模型） |
+| zip（Optimal） | **93.3 MB** |
 | 自包含启动 | ✅ 目标机无需 .NET；启动日志正常 |
 | **DirectML 在单文件夹下加载** | ✅ 日志 `PP-OCRv6-rec(18709 类)+DML`，无缺 DLL 崩溃 |
 | 安装/卸载可逆 | ✅ 复制、桌面/开始菜单快捷方式、卸载均验证通过 |
+| 精简后对比 | 235.3 → **204 MB**（剔除 WinForms ~21 MB + v3 rec 10.2 MB） |
 
 ## 单文件安装程序（.exe，给最终用户）
 
@@ -115,8 +144,8 @@ powershell -ExecutionPolicy Bypass -File tools\make-installer.ps1 -Out publish\Z
 
 | 项 | 值 |
 |---|---|
-| 安装器 | `publish\ZeOverlay-Setup.exe`，**约 90.7 MB**（内嵌 92 MB payload.zip） |
-| 展开结果 | 283 文件 / 215 MB（含 `DirectML.dll`、`models/`） |
+| 安装器 | `publish\ZeOverlay-Setup.exe`，**92.2 MB**（内嵌 93.3 MB payload.zip） |
+| 展开结果 | 280 文件 / 204 MB（含 `DirectML.dll`、`models\ch_PP-OCRv6_rec_infer.onnx`） |
 | 卸载 | 安装目录内 `卸载.bat`，或 `install.ps1 -Uninstall` |
 
 **无人值守测试**：设置环境变量后运行可跳过对话框（供 CI 使用）——
