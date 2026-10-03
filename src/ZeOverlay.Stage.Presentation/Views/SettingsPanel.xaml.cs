@@ -136,6 +136,7 @@ public partial class SettingsPanel : UserControl
         _names.Add(name);
         NameTextBox.Clear();
         RefreshLists();
+        ApplyWatchlist();
     }
 
     private void OnRemoveClick(object sender, RoutedEventArgs e)
@@ -144,6 +145,7 @@ public partial class SettingsPanel : UserControl
         {
             _names.Remove(name);
             RefreshLists();
+            ApplyWatchlist();
         }
     }
 
@@ -159,6 +161,7 @@ public partial class SettingsPanel : UserControl
         (_names[index], _names[target]) = (_names[target], _names[index]);
         RefreshLists();
         OrderList.SelectedIndex = target;
+        ApplyWatchlist();
     }
 
     private void OnAddRecentClick(object sender, RoutedEventArgs e)
@@ -171,6 +174,33 @@ public partial class SettingsPanel : UserControl
         }
         _names.Add(name);
         RefreshLists();
+        ApplyWatchlist();
+    }
+
+    /// <summary>
+    /// 关注名单**增/删/排序后立即应用**（无需再点「应用」）：重建匹配器、写盘、刷新叠加。
+    /// 新名字一律**追加到列表末尾**（`_names.Add`），`SortOrder` 与 `Names` 保持同一顺序。
+    /// 只改名单、不触碰显示/频率/热键等其它字段，阈值取当前输入（非法则沿用旧值）。
+    /// </summary>
+    private void ApplyWatchlist()
+    {
+        double threshold = Watchlist.MatchThreshold;
+        if (double.TryParse(ThresholdTextBox.Text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)
+            && parsed is >= 0.5 and <= 1.0)
+        {
+            threshold = parsed;
+        }
+
+        Watchlist = new WatchlistConfig
+        {
+            Version = Watchlist.Version,
+            Names = _names.ToList(),
+            SortOrder = _names.ToList(),
+            MatchThreshold = threshold,
+        };
+
+        ApplyStatus.Text = $"已应用 {DateTime.Now:HH:mm:ss}";
+        Applied?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>录入热键：按下组合键即写入该文本框。纯修饰键忽略。</summary>
